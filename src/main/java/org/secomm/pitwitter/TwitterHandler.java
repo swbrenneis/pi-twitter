@@ -25,8 +25,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 @PropertySource("classpath:twitter4j.properties")
@@ -87,6 +89,7 @@ public class TwitterHandler implements Runnable {
 
             for (User user : global.getUsers()) {
                 List<Status> timeline = getUserTimeline(user);
+                searchTimeline(timeline, global.getSearches());
             }
 
             storeConfig();
@@ -97,17 +100,43 @@ public class TwitterHandler implements Runnable {
         }
     }
 
-    private List<Status> getUserTimeline(User user) throws TwitterException {
+    private List<Status> getUserTimeline(User user) throws Exception {
 
         log.debug("Getting 100 statuses for user {}", user.getName());
         Paging paging = new Paging();
-        paging.setCount(25);
+        paging.setCount(50);
         SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        Date lastCreated = format.parse(user.getLastSearched());
+        List<Status> statusList = twitter.getUserTimeline(user.getName(), paging);
+        List<Status> timeline = new ArrayList<>();
+
+        for (Status status : statusList) {
+            Date created = status.getCreatedAt();
+            if (created.after(lastCreated)) {
+                timeline.add(status);
+            }
+        }
         user.setLastSearched(format.format(new Date()));
-        return twitter.getUserTimeline(user.getName(), paging);
+
+        return timeline;
     }
 
-    private void searchTimeline(List<Status> timeline) {
+    private void searchTimeline(List<Status> timeline, List<String> terms) {
+
+        for (Status status : timeline) {
+            String tweet = status.getText();
+            boolean notified = false;
+            for (int i = 0; i < terms.size() && !notified; i++) {
+                String term = terms.get(i);
+                if (tweet.toUpperCase().contains(term.toUpperCase())) {
+                    sendNotification(status);
+                    notified = true;
+                }
+            }
+        }
+    }
+
+    private void sendNotification(Status status) {
 
     }
 
