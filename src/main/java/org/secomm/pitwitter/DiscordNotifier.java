@@ -26,25 +26,27 @@ public class DiscordNotifier {
     private static final Logger log = LoggerFactory.getLogger(DiscordNotifier.class);
 
     @Value("${discord.webhook}")
+    private String webHook;
+
     private final Gson gson;
 
     private final WebhookContent webhookContent;
 
-    private String webHook;
-
     public DiscordNotifier() {
 
         gson = new GsonBuilder().create();
-        webhookContent = new WebhookContent("Pi Monitor",
-                "https://i.imgur.com/j0hzBnI.jpg",
+        webhookContent = new WebhookContent("",
+                "",
                 "",
                 new ArrayList<>());
     }
 
-    public void sendWebhook(String content, List<Embed> embeds) {
+    public void sendWebhook(twitter4j.User user, String content, List<Embed> embeds) {
 
         try {
-            webhookContent.setContent(content);
+            webhookContent.setUsername(user.getName());
+            webhookContent.setContent(String.format("@%s\n%s",user.getScreenName(), content));
+            webhookContent.setAvatar_url(user.getBiggerProfileImageURLHttps());
             webhookContent.setEmbeds(embeds);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(webHook))
@@ -58,7 +60,6 @@ public class DiscordNotifier {
         } catch (Exception e) {
             log.error("Exception in discord webhook notifier: {}", e.getLocalizedMessage());
         }
-
     }
 
     public void setWebHook(String webHook) {

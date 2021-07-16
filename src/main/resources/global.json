@@ -1,10 +1,11 @@
 {
   "users" : [
     {
-      "name" : "@OfficialBotNCop"
+      "name" : "@OfficialBotNCop",
+      "lastSearched" : "30-06-2021 00:00:01"
     }
   ],
   "searches" : [
-    "$50,000"
+    "nothing"
   ]
 }

@@ -26,7 +26,7 @@ public class PiTwitter implements CommandLineRunner {
             twitterHandler.initialize();
             twitterHandler.run();
         } catch (Exception e) {
-            log.error("Exception caught in run method: {}", e.getLocalizedMessage());
+            log.error("{} caught in run method: {}", e.getClass().getSimpleName(), e.getLocalizedMessage());
         }
     }
 }
