@@ -20,6 +20,7 @@
 
         <spring.boot.version>2.5.2</spring.boot.version>
         <twitter4j.version>4.0.7</twitter4j.version>
+        <jsondb.version>1.0.115-j11</jsondb.version>
     </properties>
 
     <dependencies>
@@ -40,6 +41,12 @@
             <groupId>org.twitter4j</groupId>
             <artifactId>twitter4j-core</artifactId>
             <version>${twitter4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jsondb</groupId>
+            <artifactId>jsondb-core</artifactId>
+            <version>${jsondb.version}</version>
         </dependency>
 
         <dependency>

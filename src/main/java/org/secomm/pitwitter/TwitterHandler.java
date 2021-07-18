@@ -1,27 +1,27 @@
 package org.secomm.pitwitter;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.secomm.pitwitter.config.Global;
-import org.secomm.pitwitter.config.Groups;
 import org.secomm.pitwitter.config.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
-import twitter4j.*;
+import twitter4j.Paging;
+import twitter4j.ResponseList;
+import twitter4j.Status;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
 
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @PropertySource("classpath:twitter4j.properties")
@@ -43,19 +43,16 @@ public class TwitterHandler {
 
     private final DiscordNotifier discordNotifier;
 
+    private final DatabaseHandler databaseHandler;
+
     private Twitter twitter;
 
-    private Global global;
+    private final Map<String, twitter4j.User> userMap;
 
-    private Groups groups;
-
-    private final Gson gson;
-
-    private Map<String, twitter4j.User> userMap;
-
-    public TwitterHandler(final DiscordNotifier discordNotifier) {
+    public TwitterHandler(final DiscordNotifier discordNotifier,
+                          final DatabaseHandler databaseHandler) {
         this.discordNotifier = discordNotifier;
-        gson = new GsonBuilder().create();
+        this.databaseHandler = databaseHandler;
         userMap = new HashMap<>();
     }
 
@@ -70,27 +67,22 @@ public class TwitterHandler {
         TwitterFactory twitterFactory = new TwitterFactory(configurationBuilder.build());
         twitter = twitterFactory.getInstance();
 
-        URI uri = getClass().getClassLoader().getResource("global.json").toURI();
-        global = gson.fromJson(new FileReader(Paths.get(uri).toFile()), Global.class);
+        databaseHandler.initialize();
 
-        uri = getClass().getClassLoader().getResource("groups.json").toURI();
-        groups = gson.fromJson(new FileReader(Paths.get(uri).toFile()), Groups.class);
     }
 
     public void run() {
 
         try {
             loadUsers();
-            for (User user : global.getUsers()) {
+            for (User user : databaseHandler.getUsers()) {
                 List<Status> timeline = getUserTimeline(user);
-                Status status = searchTimeline(timeline, global.getSearches());
+                Status status = searchTimeline(timeline, databaseHandler.getTerms());
                 if (status != null) {
                     twitter4j.User twitterUser = userMap.get(user.getName());
                     sendNotification(twitterUser, status);
                 }
             }
-
-            storeConfig();
         } catch (TwitterException e) {
             log.error("Twitter error: {}", e.getLocalizedMessage());
         } catch (Exception e) {
@@ -100,13 +92,15 @@ public class TwitterHandler {
 
     private void loadUsers() throws TwitterException {
 
-        List<String> usernames = new ArrayList<>();
-        for (User user : global.getUsers()) {
-            usernames.add(user.getName().substring(1));
-        }
-        ResponseList<twitter4j.User> twitterUsers = twitter.lookupUsers(usernames.toArray(new String[0]));
-        for (int i = 0; i < usernames.size(); ++i) {
-            userMap.put("@" + usernames.get(i), twitterUsers.get(i));
+        if (!databaseHandler.getUsers().isEmpty()) {
+            List<String> usernames = new ArrayList<>();
+            for (User user : databaseHandler.getUsers()) {
+                usernames.add(user.getName().substring(1));
+            }
+            ResponseList<twitter4j.User> twitterUsers = twitter.lookupUsers(usernames.toArray(new String[0]));
+            for (int i = 0; i < usernames.size(); ++i) {
+                userMap.put("@" + usernames.get(i), twitterUsers.get(i));
+            }
         }
     }
 
@@ -132,7 +126,7 @@ public class TwitterHandler {
                 timeline.add(status);
             }
         }
-        user.setLastSearched(format.format(new Date()));
+        databaseHandler.updateSearchTime(user.getName(), format.format(new Date()));
 
         return timeline;
     }
@@ -153,16 +147,5 @@ public class TwitterHandler {
     private void sendNotification(twitter4j.User user, Status status) {
 
         discordNotifier.sendWebhook(user, status.getText(), new ArrayList<>());
-    }
-
-    private void storeConfig() throws URISyntaxException, IOException {
-
-        URI uri = getClass().getClassLoader().getResource("global.json").toURI();
-        String json = gson.toJson(global);
-        Files.writeString(Paths.get(uri).toAbsolutePath(), json);
-
-        uri = getClass().getClassLoader().getResource("groups.json").toURI();
-        json = gson.toJson(groups);
-        Files.writeString(Paths.get(uri).toAbsolutePath(), json);
     }
 }
