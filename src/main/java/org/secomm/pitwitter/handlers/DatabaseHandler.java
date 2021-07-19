@@ -1,4 +1,4 @@
-package org.secomm.pitwitter;
+package org.secomm.pitwitter.handlers;
 
 import io.jsondb.JsonDBTemplate;
 import org.secomm.pitwitter.config.Global;

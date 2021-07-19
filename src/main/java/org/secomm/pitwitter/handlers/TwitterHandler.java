@@ -1,5 +1,6 @@
-package org.secomm.pitwitter;
+package org.secomm.pitwitter.handlers;
 
+import org.secomm.pitwitter.DiscordNotifier;
 import org.secomm.pitwitter.config.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
+import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
 
 import java.io.FileNotFoundException;
@@ -45,14 +47,18 @@ public class TwitterHandler {
 
     private final DatabaseHandler databaseHandler;
 
+    private final MentionsHandler mentionsHandler;
+
     private Twitter twitter;
 
     private final Map<String, twitter4j.User> userMap;
 
     public TwitterHandler(final DiscordNotifier discordNotifier,
-                          final DatabaseHandler databaseHandler) {
+                          final DatabaseHandler databaseHandler,
+                          final MentionsHandler mentionsHandler) {
         this.discordNotifier = discordNotifier;
         this.databaseHandler = databaseHandler;
+        this.mentionsHandler = mentionsHandler;
         userMap = new HashMap<>();
     }
 
@@ -64,11 +70,12 @@ public class TwitterHandler {
                 .setOAuthAccessTokenSecret(accessTokenSecret)
                 .setOAuthConsumerKey(consumerKey)
                 .setOAuthConsumerSecret(consumerSecret);
-        TwitterFactory twitterFactory = new TwitterFactory(configurationBuilder.build());
+        Configuration configuration = configurationBuilder.build();
+        TwitterFactory twitterFactory = new TwitterFactory(configuration);
         twitter = twitterFactory.getInstance();
 
         databaseHandler.initialize();
-
+        mentionsHandler.initialize(configuration);
     }
 
     public void run() {
@@ -146,6 +153,6 @@ public class TwitterHandler {
 
     private void sendNotification(twitter4j.User user, Status status) {
 
-        discordNotifier.sendWebhook(user, status.getText(), new ArrayList<>());
+        discordNotifier.sendWebhook("terms", user, status.getText(), new ArrayList<>());
     }
 }

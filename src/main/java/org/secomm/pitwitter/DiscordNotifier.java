@@ -25,8 +25,11 @@ public class DiscordNotifier {
 
     private static final Logger log = LoggerFactory.getLogger(DiscordNotifier.class);
 
-    @Value("${discord.webhook}")
-    private String webHook;
+    @Value("${discord.webhook.terms}")
+    private String termsWebHook;
+
+    @Value("${discord.webhook.track}")
+    private String trackWebHook;
 
     private final Gson gson;
 
@@ -41,7 +44,17 @@ public class DiscordNotifier {
                 new ArrayList<>());
     }
 
-    public void sendWebhook(twitter4j.User user, String content, List<Embed> embeds) {
+    public void sendWebhook(String webHookName, twitter4j.User user, String content, List<Embed> embeds) {
+
+        String webhook = "";
+        switch (webHookName) {
+            case "track":
+                webhook = trackWebHook;
+                break;
+            case "term":
+                webhook = termsWebHook;
+                break;
+        }
 
         try {
             webhookContent.setUsername(user.getName());
@@ -49,7 +62,7 @@ public class DiscordNotifier {
             webhookContent.setAvatar_url(user.getBiggerProfileImageURLHttps());
             webhookContent.setEmbeds(embeds);
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(webHook))
+                    .uri(new URI(webhook))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(webhookContent)))
                     .header("Content-Type", "application/json")
                     .build();
@@ -62,7 +75,4 @@ public class DiscordNotifier {
         }
     }
 
-    public void setWebHook(String webHook) {
-        this.webHook = webHook;
-    }
 }
