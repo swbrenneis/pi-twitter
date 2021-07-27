@@ -3,7 +3,7 @@ package org.secomm.pitwitter.rest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.secomm.pitwitter.config.Global;
-import org.secomm.pitwitter.config.User;
+import org.secomm.pitwitter.config.UserContext;
 import org.secomm.pitwitter.handlers.TwitterHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,43 +32,45 @@ public class TwitterController {
     }
 
     @GetMapping(value = "/get-global", produces = "application/json")
-    @CrossOrigin(origins = "http://localhost:3000")
+    @CrossOrigin(origins = "http://localhost")
     public GlobalValues getGlobal() {
         return getGlobalValues(twitterHandler.getGlobal());
     }
 
-    @PostMapping(value = "/edit-global-users", consumes = "application/json", produces = "application/json")
-    @CrossOrigin(origins = "http://localhost:3000")
-    public GlobalValues editGlobalUsers(@RequestBody EditList edits) {
+    @PostMapping(value = "/edit-global-user", consumes = "application/json", produces = "application/json")
+    @CrossOrigin(origins = "http://localhost")
+    public EditResponse editGlobalUser(@RequestBody EditList edits) {
 
-        log.debug("Edit global users request received: {}", edits);
+        log.debug("Edit global user request received: {}", edits);
 
+        String result = null;
         switch (edits.getEditAction()) {
             case ADD:
-                twitterHandler.editUsers(edits.getEdits(), TwitterHandler.Operation.ADD);
+                result = twitterHandler.editUser(edits.getEdits().get(0), TwitterHandler.Operation.ADD);
                 break;
             case DELETE:
-                twitterHandler.editUsers(edits.getEdits(), TwitterHandler.Operation.DELETE);
+                result = twitterHandler.editUser(edits.getEdits().get(0), TwitterHandler.Operation.DELETE);
                 break;
         }
-        return getGlobalValues(twitterHandler.getGlobal());
+        return new EditResponse(result, getGlobalValues(twitterHandler.getGlobal()));
     }
 
     @PostMapping(value = "/edit-global-terms", consumes = "application/json", produces = "application/json")
     @CrossOrigin(origins = "http://localhost:3000")
-    public GlobalValues editGlobalTerms(@RequestBody EditList edits) {
+    public EditResponse editGlobalTerms(@RequestBody EditList edits) {
 
         log.debug("Edit global terms request received: {}", edits);
 
+        String result = null;
         switch (edits.getEditAction()) {
             case ADD:
-                twitterHandler.editTerms(edits.getEdits(), TwitterHandler.Operation.ADD);
+                result = twitterHandler.editTerms(edits.getEdits(), TwitterHandler.Operation.ADD);
                 break;
             case DELETE:
-                twitterHandler.editTerms(edits.getEdits(), TwitterHandler.Operation.DELETE);
+                result = twitterHandler.editTerms(edits.getEdits(), TwitterHandler.Operation.DELETE);
                 break;
         }
-        return getGlobalValues(twitterHandler.getGlobal());
+        return new EditResponse(result, getGlobalValues(twitterHandler.getGlobal()));
     }
 
     @PostMapping(value = "/edit-global-webhook", consumes = "application/json", produces = "application/json")
@@ -85,8 +87,8 @@ public class TwitterController {
     private GlobalValues getGlobalValues(Global global) {
 
         List<String> users = new ArrayList<>();
-        for (User user : global.getUsers()) {
-            users.add(user.getName());
+        for (UserContext userContext : global.getUsers()) {
+            users.add(userContext.getName());
         }
         return new GlobalValues(users, global.getTerms(), global.getWebhook());
     }

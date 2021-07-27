@@ -6,13 +6,13 @@ public class Group {
 
     private String name;
 
-    private List<User> users;
+    private List<UserContext> userContexts;
 
     private List<String> terms;
 
-    public Group(String name, List<User> users, List<String> terms) {
+    public Group(String name, List<UserContext> userContexts, List<String> terms) {
         this.name = name;
-        this.users = users;
+        this.userContexts = userContexts;
         this.terms = terms;
     }
 
@@ -24,12 +24,12 @@ public class Group {
         this.name = name;
     }
 
-    public List<User> getUsers() {
-        return users;
+    public List<UserContext> getUsers() {
+        return userContexts;
     }
 
-    public void setUsers(List<User> users) {
-        this.users = users;
+    public void setUsers(List<UserContext> userContexts) {
+        this.userContexts = userContexts;
     }
 
     public List<String> getTerms() {
@@ -44,7 +44,7 @@ public class Group {
     public String toString() {
         return "Group{" +
                 "name='" + name + '\'' +
-                ", users=" + users +
+                ", users=" + userContexts +
                 ", terms=" + terms +
                 '}';
     }
