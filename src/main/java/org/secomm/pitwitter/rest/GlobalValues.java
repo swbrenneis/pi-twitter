@@ -1,46 +1,29 @@
-package org.secomm.pitwitter.config;
-
-import io.jsondb.annotation.Document;
-import io.jsondb.annotation.Id;
+package org.secomm.pitwitter.rest;
 
 import java.util.List;
 
-@Document(collection = "global", schemaVersion = "1.0")
-public class Global {
+public class GlobalValues {
 
-    @Id
-    private String id;
-
-    private List<User> users;
+    private List<String> users;
 
     private List<String> terms;
 
     private String webhook;
 
-    public Global() {
-        id = "000001";
+    public GlobalValues() {
     }
 
-    public Global(String id, List<User> users, List<String> terms, String webhook) {
-        this.id = id;
+    public GlobalValues(List<String> users, List<String> terms, String webhook) {
         this.users = users;
         this.terms = terms;
         this.webhook = webhook;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public List<User> getUsers() {
+    public List<String> getUsers() {
         return users;
     }
 
-    public void setUsers(List<User> users) {
+    public void setUsers(List<String> users) {
         this.users = users;
     }
 
@@ -62,9 +45,8 @@ public class Global {
 
     @Override
     public String toString() {
-        return "Global{" +
-                "id='" + id + '\'' +
-                ", users=" + users +
+        return "GlobalValues{" +
+                "users=" + users +
                 ", terms=" + terms +
                 ", webhook='" + webhook + '\'' +
                 '}';

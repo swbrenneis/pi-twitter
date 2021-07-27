@@ -44,16 +44,12 @@ public class DiscordNotifier {
                 new ArrayList<>());
     }
 
-    public void sendWebhook(String webHookName, twitter4j.User user, String content, List<Embed> embeds) {
+    public void sendWebhook(String webhook, twitter4j.User user, String content, List<Embed> embeds) {
 
-        String webhook = "";
-        switch (webHookName) {
-            case "track":
-                webhook = trackWebHook;
-                break;
-            case "term":
-                webhook = termsWebHook;
-                break;
+        String webHookUrl = webhook;
+
+        if (webHookUrl == null) {
+            webHookUrl = trackWebHook;
         }
 
         try {
@@ -62,7 +58,7 @@ public class DiscordNotifier {
             webhookContent.setAvatar_url(user.getBiggerProfileImageURLHttps());
             webhookContent.setEmbeds(embeds);
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(webhook))
+                    .uri(new URI(webHookUrl))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(webhookContent)))
                     .header("Content-Type", "application/json")
                     .build();
@@ -74,5 +70,4 @@ public class DiscordNotifier {
             log.error("Exception in discord webhook notifier: {}", e.getLocalizedMessage());
         }
     }
-
 }
