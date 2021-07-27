@@ -15,14 +15,17 @@ public class Global {
 
     private List<String> terms;
 
+    private String webhook;
+
     public Global() {
         id = "000001";
     }
 
-    public Global(String id, List<User> users, List<String> terms) {
+    public Global(String id, List<User> users, List<String> terms, String webhook) {
         this.id = id;
         this.users = users;
         this.terms = terms;
+        this.webhook = webhook;
     }
 
     public String getId() {
@@ -49,12 +52,21 @@ public class Global {
         this.terms = terms;
     }
 
+    public String getWebhook() {
+        return webhook;
+    }
+
+    public void setWebhook(String webhook) {
+        this.webhook = webhook;
+    }
+
     @Override
     public String toString() {
         return "Global{" +
-                "Id='" + id + '\'' +
+                "id='" + id + '\'' +
                 ", users=" + users +
-                ", searches=" + terms +
+                ", terms=" + terms +
+                ", webhook='" + webhook + '\'' +
                 '}';
     }
 }

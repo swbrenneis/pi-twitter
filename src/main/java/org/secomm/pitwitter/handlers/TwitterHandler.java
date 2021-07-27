@@ -1,6 +1,7 @@
 package org.secomm.pitwitter.handlers;
 
 import org.secomm.pitwitter.DiscordNotifier;
+import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +25,20 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 @PropertySource("classpath:twitter4j.properties")
 public class TwitterHandler {
 
     private static final Logger log = LoggerFactory.getLogger(TwitterHandler.class);
+
+    public enum Operation { ADD, DELETE }
+
+    public static final String DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
 
     @Value("${oauth.consumerKey}")
     private String consumerKey;
@@ -42,6 +51,8 @@ public class TwitterHandler {
 
     @Value("${oauth.accessTokenSecret}")
     private String accessTokenSecret;
+
+    private String webhook;
 
     private final DiscordNotifier discordNotifier;
 
@@ -78,16 +89,57 @@ public class TwitterHandler {
         mentionsHandler.initialize(configuration);
     }
 
+    public void editUsers(List<String> users, Operation operation) {
+
+        for (String user : users) {
+            switch (operation) {
+                case ADD:
+                    databaseHandler.addUser(user);
+                    break;
+                case DELETE:
+                    databaseHandler.deleteUser(user);
+            }
+        }
+    }
+
+    public void editTerms(List<String> terms, Operation operation) {
+
+        for (String term : terms) {
+            switch (operation) {
+                case ADD:
+                    databaseHandler.addTerm(term);
+                    break;
+                case DELETE:
+                    databaseHandler.deleteTerm(term);
+            }
+        }
+    }
+
+    public void setWebhook(String webhook) {
+        this.webhook = webhook;
+    }
+
     public void run() {
 
         try {
             loadUsers();
-            for (User user : databaseHandler.getUsers()) {
-                List<Status> timeline = getUserTimeline(user);
-                Status status = searchTimeline(timeline, databaseHandler.getTerms());
-                if (status != null) {
-                    twitter4j.User twitterUser = userMap.get(user.getName());
-                    sendNotification(twitterUser, status);
+            Lock lock = new ReentrantLock();
+            Condition condition = lock.newCondition();
+            boolean run = true;
+            while (run) {
+                for (User user : databaseHandler.getUsers()) {
+                    List<Status> timeline = getUserTimeline(user);
+                    Status status = searchTimeline(timeline, databaseHandler.getTerms());
+                    if (status != null) {
+                        twitter4j.User twitterUser = userMap.get(user.getName());
+                        sendNotification(twitterUser, status);
+                    }
+                }
+                lock.lock();
+                try {
+                    run = !condition.await(1, TimeUnit.MINUTES);
+                } finally {
+                    lock.unlock();
                 }
             }
         } catch (TwitterException e) {
@@ -116,7 +168,7 @@ public class TwitterHandler {
         log.debug("Getting 50 statuses for user {}", user.getName());
         Paging paging = new Paging();
         paging.setCount(50);
-        SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        SimpleDateFormat format = new SimpleDateFormat(DATE_FORMAT);
         Date lastSearched = null;
         String lastSearchedString = user.getLastSearched();
         if (lastSearchedString != null) {
@@ -153,6 +205,10 @@ public class TwitterHandler {
 
     private void sendNotification(twitter4j.User user, Status status) {
 
-        discordNotifier.sendWebhook("terms", user, status.getText(), new ArrayList<>());
+        discordNotifier.sendWebhook(webhook, user, status.getText(), new ArrayList<>());
+    }
+
+    public Global getGlobal() {
+        return databaseHandler.getGlobal();
     }
 }

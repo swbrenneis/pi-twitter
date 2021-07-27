@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -49,7 +51,9 @@ public class DatabaseHandler {
         }
     }
 
-    public void addUser(User user) {
+    public void addUser(String username) {
+        SimpleDateFormat format = new SimpleDateFormat(TwitterHandler.DATE_FORMAT);
+        User user = new User(username, format.format(new Date()));
         global.getUsers().add(user);
         jsonDBTemplate.upsert(global);
     }
@@ -84,5 +88,18 @@ public class DatabaseHandler {
         }
         global.setTerms(termsList);
         jsonDBTemplate.upsert(global);
+    }
+
+    public String getWebhook() {
+        return global.getWebhook();
+    }
+
+    public void setWebhook(String webhook) {
+        global.setWebhook(webhook);
+        jsonDBTemplate.upsert(global);
+    }
+
+    public Global getGlobal() {
+        return global;
     }
 }
