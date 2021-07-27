@@ -11,7 +11,7 @@ public class Global {
     @Id
     private String id;
 
-    private List<User> users;
+    private List<UserContext> users;
 
     private List<String> terms;
 
@@ -21,7 +21,7 @@ public class Global {
         id = "000001";
     }
 
-    public Global(String id, List<User> users, List<String> terms, String webhook) {
+    public Global(String id, List<UserContext> users, List<String> terms, String webhook) {
         this.id = id;
         this.users = users;
         this.terms = terms;
@@ -36,12 +36,12 @@ public class Global {
         this.id = id;
     }
 
-    public List<User> getUsers() {
+    public List<UserContext> getUsers() {
         return users;
     }
 
-    public void setUsers(List<User> users) {
-        this.users = users;
+    public void setUsers(List<UserContext> userContexts) {
+        this.users = userContexts;
     }
 
     public List<String> getTerms() {

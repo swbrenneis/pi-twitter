@@ -3,7 +3,7 @@ package org.secomm.pitwitter.handlers;
 import io.jsondb.JsonDBTemplate;
 import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.Groups;
-import org.secomm.pitwitter.config.User;
+import org.secomm.pitwitter.config.UserContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -37,15 +37,15 @@ public class DatabaseHandler {
 //        jsonDBTemplate.upsert(global);
     }
 
-    public List<User> getUsers() {
+    public List<UserContext> getUsers() {
         return global.getUsers();
     }
 
     public void updateSearchTime(String username, String searchTime) {
 
-        for (User user : global.getUsers()) {
-            if (user.getName().equals(username)) {
-                user.setLastSearched(searchTime);
+        for (UserContext userContext : global.getUsers()) {
+            if (userContext.getName().equals(username)) {
+                userContext.setLastSearched(searchTime);
                 jsonDBTemplate.upsert(global);
             }
         }
@@ -53,20 +53,20 @@ public class DatabaseHandler {
 
     public void addUser(String username) {
         SimpleDateFormat format = new SimpleDateFormat(TwitterHandler.DATE_FORMAT);
-        User user = new User(username, format.format(new Date()));
-        global.getUsers().add(user);
+        UserContext userContext = new UserContext(username, format.format(new Date()));
+        global.getUsers().add(userContext);
         jsonDBTemplate.upsert(global);
     }
 
     public void deleteUser(String username) {
 
-        List<User> userList = new ArrayList<>();
-        for (User user : global.getUsers()) {
-            if (!user.getName().equals(username)) {
-                userList.add(user);
+        List<UserContext> userContextList = new ArrayList<>();
+        for (UserContext userContext : global.getUsers()) {
+            if (!userContext.getName().equals(username)) {
+                userContextList.add(userContext);
             }
         }
-        global.setUsers(userList);
+        global.setUsers(userContextList);
         jsonDBTemplate.upsert(global);
     }
 

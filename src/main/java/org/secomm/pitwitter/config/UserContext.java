@@ -1,12 +1,12 @@
 package org.secomm.pitwitter.config;
 
-public class User {
+public class UserContext {
 
     private String name;
 
     private String lastSearched;
 
-    public User(String name, String lastSearched) {
+    public UserContext(String name, String lastSearched) {
         this.name = name;
         this.lastSearched = lastSearched;
     }

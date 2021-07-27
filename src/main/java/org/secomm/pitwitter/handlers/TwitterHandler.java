@@ -2,18 +2,13 @@ package org.secomm.pitwitter.handlers;
 
 import org.secomm.pitwitter.DiscordNotifier;
 import org.secomm.pitwitter.config.Global;
-import org.secomm.pitwitter.config.User;
+import org.secomm.pitwitter.config.UserContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
-import twitter4j.Paging;
-import twitter4j.ResponseList;
-import twitter4j.Status;
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
+import twitter4j.*;
 import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
 
@@ -39,6 +34,8 @@ public class TwitterHandler {
     public enum Operation { ADD, DELETE }
 
     public static final String DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
+
+    private static final int PAGE_SIZE = 25;
 
     @Value("${oauth.consumerKey}")
     private String consumerKey;
@@ -89,20 +86,34 @@ public class TwitterHandler {
         mentionsHandler.initialize(configuration);
     }
 
-    public void editUsers(List<String> users, Operation operation) {
+    public String editUser(String userName, Operation operation) {
 
-        for (String user : users) {
-            switch (operation) {
-                case ADD:
-                    databaseHandler.addUser(user);
-                    break;
-                case DELETE:
-                    databaseHandler.deleteUser(user);
-            }
+        switch (operation) {
+            case ADD:
+                try {
+                    User user = twitter.showUser(userName);
+                    if (user == null) {
+                        log.warn("User {} does not exist", userName);
+                        return "No such user";
+                    } else if (user.isProtected()) {
+                        log.warn("User {} timeline is private", userName);
+                        return "User timeline is private";
+                    } else {
+                        databaseHandler.addUser(userName);
+                        return "User added";
+                    }
+                } catch (TwitterException e) {
+                    log.error("Twitter exception in editUsers: {}", e.getLocalizedMessage());
+                }
+                break;
+            case DELETE:
+                databaseHandler.deleteUser(userName);
+                return "User deleted";
         }
+        return "Invalid operation";
     }
 
-    public void editTerms(List<String> terms, Operation operation) {
+    public String editTerms(List<String> terms, Operation operation) {
 
         for (String term : terms) {
             switch (operation) {
@@ -113,10 +124,12 @@ public class TwitterHandler {
                     databaseHandler.deleteTerm(term);
             }
         }
+        return "Success";
     }
 
     public void setWebhook(String webhook) {
         this.webhook = webhook;
+        databaseHandler.setWebhook(webhook);
     }
 
     public void run() {
@@ -127,11 +140,11 @@ public class TwitterHandler {
             Condition condition = lock.newCondition();
             boolean run = true;
             while (run) {
-                for (User user : databaseHandler.getUsers()) {
-                    List<Status> timeline = getUserTimeline(user);
+                for (UserContext userContext : databaseHandler.getUsers()) {
+                    List<Status> timeline = getUserTimeline(userContext);
                     Status status = searchTimeline(timeline, databaseHandler.getTerms());
                     if (status != null) {
-                        twitter4j.User twitterUser = userMap.get(user.getName());
+                        twitter4j.User twitterUser = userMap.get(userContext.getName());
                         sendNotification(twitterUser, status);
                     }
                 }
@@ -153,8 +166,8 @@ public class TwitterHandler {
 
         if (!databaseHandler.getUsers().isEmpty()) {
             List<String> usernames = new ArrayList<>();
-            for (User user : databaseHandler.getUsers()) {
-                usernames.add(user.getName().substring(1));
+            for (UserContext userContext : databaseHandler.getUsers()) {
+                usernames.add(userContext.getName().substring(1));
             }
             ResponseList<twitter4j.User> twitterUsers = twitter.lookupUsers(usernames.toArray(new String[0]));
             for (int i = 0; i < usernames.size(); ++i) {
@@ -163,20 +176,20 @@ public class TwitterHandler {
         }
     }
 
-    private List<Status> getUserTimeline(User user) throws Exception {
+    private List<Status> getUserTimeline(UserContext userContext) throws Exception {
 
-        log.debug("Getting 50 statuses for user {}", user.getName());
+        log.debug("Getting {} statuses for user {}", PAGE_SIZE, userContext.getName());
         Paging paging = new Paging();
-        paging.setCount(50);
+        paging.setCount(PAGE_SIZE);
         SimpleDateFormat format = new SimpleDateFormat(DATE_FORMAT);
         Date lastSearched = null;
-        String lastSearchedString = user.getLastSearched();
+        String lastSearchedString = userContext.getLastSearched();
         if (lastSearchedString != null) {
             lastSearched = format.parse(lastSearchedString);
         } else {
             lastSearched = new Date();
         }
-        List<Status> statusList = twitter.getUserTimeline(user.getName(), paging);
+        List<Status> statusList = twitter.getUserTimeline(userContext.getName(), paging);
         List<Status> timeline = new ArrayList<>();
 
         for (Status status : statusList) {
@@ -185,7 +198,7 @@ public class TwitterHandler {
                 timeline.add(status);
             }
         }
-        databaseHandler.updateSearchTime(user.getName(), format.format(new Date()));
+        databaseHandler.updateSearchTime(userContext.getName(), format.format(new Date()));
 
         return timeline;
     }
