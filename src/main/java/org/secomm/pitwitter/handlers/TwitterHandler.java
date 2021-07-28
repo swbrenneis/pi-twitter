@@ -3,6 +3,8 @@ package org.secomm.pitwitter.handlers;
 import org.secomm.pitwitter.DiscordNotifier;
 import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.UserContext;
+import org.secomm.pitwitter.webhook.Embed;
+import org.secomm.pitwitter.webhook.Image;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -167,11 +169,12 @@ public class TwitterHandler {
         if (!databaseHandler.getUsers().isEmpty()) {
             List<String> usernames = new ArrayList<>();
             for (UserContext userContext : databaseHandler.getUsers()) {
-                usernames.add(userContext.getName().substring(1));
-            }
-            ResponseList<twitter4j.User> twitterUsers = twitter.lookupUsers(usernames.toArray(new String[0]));
-            for (int i = 0; i < usernames.size(); ++i) {
-                userMap.put("@" + usernames.get(i), twitterUsers.get(i));
+                User user = twitter.showUser(userContext.getName().substring(1));
+                if (user != null) {
+                    userMap.put(userContext.getName(), user);
+                } else {
+                    log.warn("User {} does not exist", userContext.getName());
+                }
             }
         }
     }
@@ -218,7 +221,19 @@ public class TwitterHandler {
 
     private void sendNotification(twitter4j.User user, Status status) {
 
-        discordNotifier.sendWebhook(webhook, user, status.getText(), new ArrayList<>());
+        List<Embed> embeds = new ArrayList<>();
+        MediaEntity[] mediaEntities = status.getMediaEntities();
+        boolean imageAdded = false; // Only add the first photo if there is one.
+        for (MediaEntity mediaEntity : mediaEntities) {
+            if (mediaEntity.getType().equals("photo") && !imageAdded) {
+                Embed imageEmbed = new Embed();
+                Image image = new Image(mediaEntity.getMediaURLHttps());
+                imageEmbed.setImage(image);
+                embeds.add(imageEmbed);
+                imageAdded = true;
+            }
+        }
+        discordNotifier.sendWebhook(webhook, user, status.getText(), embeds);
     }
 
     public Global getGlobal() {

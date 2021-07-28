@@ -23,24 +23,20 @@ public class TwitterController {
 
     private final Logger log = LoggerFactory.getLogger(TwitterController.class);
 
-    private static final String CORS_HOST = "https://estaqueesta.net:8443";
-
     private final TwitterHandler twitterHandler;
-
-    private Gson gson = new GsonBuilder().create();
 
     public TwitterController(final TwitterHandler twitterHandler) {
         this.twitterHandler = twitterHandler;
     }
 
     @GetMapping(value = "/get-global", produces = "application/json")
-    @CrossOrigin(origins = CORS_HOST)
+    @CrossOrigin
     public GlobalValues getGlobal() {
         return getGlobalValues(twitterHandler.getGlobal());
     }
 
     @PostMapping(value = "/edit-global-user", consumes = "application/json", produces = "application/json")
-    @CrossOrigin(origins = CORS_HOST)
+    @CrossOrigin
     public EditResponse editGlobalUsers(@RequestBody EditList edits) {
 
         log.debug("Edit global user request received: {}", edits);
@@ -58,7 +54,7 @@ public class TwitterController {
     }
 
     @PostMapping(value = "/edit-global-terms", consumes = "application/json", produces = "application/json")
-    @CrossOrigin(origins = CORS_HOST)
+    @CrossOrigin
     public EditResponse editGlobalTerms(@RequestBody EditList edits) {
 
         log.debug("Edit global terms request received: {}", edits);
@@ -76,7 +72,7 @@ public class TwitterController {
     }
 
     @PostMapping(value = "/edit-global-webhook", consumes = "application/json", produces = "application/json")
-    @CrossOrigin(origins = CORS_HOST)
+    @CrossOrigin
     public GlobalValues editGlobalWebhook(@RequestBody EditWebhook edit) {
 
         log.debug("Edit global webhook request received: {}", edit);

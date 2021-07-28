@@ -15,7 +15,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -51,6 +53,13 @@ public class DiscordNotifier {
         if (webHookUrl == null) {
             webHookUrl = trackWebHook;
         }
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSSZ");
+        Date now = new Date();
+        Embed timestampEmbed = new Embed();
+        timestampEmbed.setTimestamp(String.format("%sT%s", dateFormat.format(now), timeFormat.format(now)));
+        embeds.add(timestampEmbed);
 
         try {
             webhookContent.setUsername(user.getName());

@@ -21,14 +21,14 @@
     </appender>
 
     <logger name="org.springframework" level="WARN" additivity="false">
-        <appender-ref ref="FILE-ROLLING"/>
+        <appender-ref ref="STDOUT"/>
     </logger>
 
     <logger name="twitter4j" level="WARN" additivity="false">
-        <appender-ref ref="FILE-ROLLING"/>
+        <appender-ref ref="STDOUT"/>
     </logger>
 
     <root level="WARN">
-        <appender-ref ref="FILE-ROLLING"/>
+        <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

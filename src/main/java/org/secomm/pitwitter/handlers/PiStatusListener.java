@@ -1,14 +1,13 @@
 package org.secomm.pitwitter.handlers;
 
 import org.secomm.pitwitter.DiscordNotifier;
+import org.secomm.pitwitter.webhook.Embed;
+import org.secomm.pitwitter.webhook.Image;
 import org.springframework.stereotype.Component;
-import twitter4j.StallWarning;
-import twitter4j.Status;
-import twitter4j.StatusDeletionNotice;
-import twitter4j.StatusListener;
-import twitter4j.User;
+import twitter4j.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class PiStatusListener implements StatusListener {
@@ -22,7 +21,19 @@ public class PiStatusListener implements StatusListener {
     @Override
     public void onStatus(Status status) {
 
-        discordNotifier.sendWebhook("track", status.getUser(), status.getText(), new ArrayList<>());
+        List<Embed> embeds = new ArrayList<>();
+        MediaEntity[] mediaEntities = status.getMediaEntities();
+        boolean imageAdded = false; // Only add the first photo if there is one.
+        for (MediaEntity mediaEntity : mediaEntities) {
+            if (mediaEntity.getType().equals("photo") && !imageAdded) {
+                Embed imageEmbed = new Embed();
+                Image image = new Image(mediaEntity.getMediaURLHttps());
+                imageEmbed.setImage(image);
+                embeds.add(imageEmbed);
+                imageAdded = true;
+            }
+        }
+        discordNotifier.sendWebhook("track", status.getUser(), status.getText(), embeds);
     }
 
     @Override

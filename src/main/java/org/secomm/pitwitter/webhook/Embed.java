@@ -20,6 +20,8 @@ public class Embed {
 
     private Image image;
 
+    private String timestamp;
+
     public Embed() {
     }
 
@@ -87,6 +89,14 @@ public class Embed {
         this.image = image;
     }
 
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
     @Override
     public String toString() {
         return "Embed{" +
@@ -98,6 +108,7 @@ public class Embed {
                 ", fields=" + fields +
                 ", thumbnail=" + thumbnail +
                 ", image=" + image +
+                ", timestamp='" + timestamp + '\'' +
                 '}';
     }
 }
