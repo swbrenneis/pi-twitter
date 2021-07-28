@@ -23,7 +23,7 @@ public class TwitterController {
 
     private final Logger log = LoggerFactory.getLogger(TwitterController.class);
 
-    private static final String CORS_HOST = "http://estaqueesta.net";
+    private static final String CORS_HOST = "https://estaqueesta.net:8443";
 
     private final TwitterHandler twitterHandler;
 
@@ -39,12 +39,9 @@ public class TwitterController {
         return getGlobalValues(twitterHandler.getGlobal());
     }
 
-    @PostMapping(value = "/edit-global-users", consumes = "application/json", produces = "application/json")
-    @CrossOrigin(origins = CORS_HOST)
-    public GlobalValues editGlobalUsers(@RequestBody EditList edits) {
     @PostMapping(value = "/edit-global-user", consumes = "application/json", produces = "application/json")
-    @CrossOrigin(origins = "http://localhost")
-    public EditResponse editGlobalUser(@RequestBody EditList edits) {
+    @CrossOrigin(origins = CORS_HOST)
+    public EditResponse editGlobalUsers(@RequestBody EditList edits) {
 
         log.debug("Edit global user request received: {}", edits);
 
@@ -62,8 +59,6 @@ public class TwitterController {
 
     @PostMapping(value = "/edit-global-terms", consumes = "application/json", produces = "application/json")
     @CrossOrigin(origins = CORS_HOST)
-    public GlobalValues editGlobalTerms(@RequestBody EditList edits) {
-    @CrossOrigin(origins = "http://localhost:3000")
     public EditResponse editGlobalTerms(@RequestBody EditList edits) {
 
         log.debug("Edit global terms request received: {}", edits);
