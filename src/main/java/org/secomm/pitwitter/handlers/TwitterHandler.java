@@ -86,6 +86,7 @@ public class TwitterHandler {
 
         databaseHandler.initialize();
         mentionsHandler.initialize(configuration);
+        webhook = databaseHandler.getWebhook();
     }
 
     public String editUser(String userName, Operation operation) {
@@ -169,11 +170,16 @@ public class TwitterHandler {
         if (!databaseHandler.getUsers().isEmpty()) {
             List<String> usernames = new ArrayList<>();
             for (UserContext userContext : databaseHandler.getUsers()) {
-                User user = twitter.showUser(userContext.getName().substring(1));
-                if (user != null) {
-                    userMap.put(userContext.getName(), user);
-                } else {
-                    log.warn("User {} does not exist", userContext.getName());
+                try {
+                    User user = twitter.showUser(userContext.getName().substring(1));
+                    if (user != null) {
+                        userMap.put(userContext.getName(), user);
+                    } else {
+                        log.warn("User {} does not exist", userContext.getName());
+                    }
+                } catch (TwitterException e) {
+                    // Usually means the account is suspended
+                    log.warn("Twitter exception during user load: {}", e.getLocalizedMessage());
                 }
             }
         }
@@ -212,6 +218,7 @@ public class TwitterHandler {
             String tweet = status.getText();
             for (String term : terms) {
                 if (tweet.toUpperCase().contains(term.toUpperCase())) {
+                    log.info("Matched {} in tweet by {}", term, status.getUser().getName());
                     return status;
                 }
             }
@@ -227,13 +234,19 @@ public class TwitterHandler {
         for (MediaEntity mediaEntity : mediaEntities) {
             if (mediaEntity.getType().equals("photo") && !imageAdded) {
                 Embed imageEmbed = new Embed();
-                Image image = new Image(mediaEntity.getMediaURLHttps());
+                String imageUrl = mediaEntity.getMediaURLHttps();
+                int index = imageUrl.indexOf("https");
+                imageUrl = imageUrl.substring(index);
+                imageUrl = imageUrl.substring(0, imageUrl.length());
+                Image image = new Image(imageUrl);
                 imageEmbed.setImage(image);
                 embeds.add(imageEmbed);
+                log.info("Embedded image at {}", imageUrl);
                 imageAdded = true;
+
             }
         }
-        discordNotifier.sendWebhook(webhook, user, status.getText(), embeds);
+        discordNotifier.sendWebhook(webhook, user, status.getText(),"Twitter Monitor", embeds);
     }
 
     public Global getGlobal() {

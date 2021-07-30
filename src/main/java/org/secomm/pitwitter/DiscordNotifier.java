@@ -3,6 +3,7 @@ package org.secomm.pitwitter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.secomm.pitwitter.webhook.Embed;
+import org.secomm.pitwitter.webhook.Footer;
 import org.secomm.pitwitter.webhook.WebhookContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,29 +47,28 @@ public class DiscordNotifier {
                 new ArrayList<>());
     }
 
-    public void sendWebhook(String webhook, twitter4j.User user, String content, List<Embed> embeds) {
-
-        String webHookUrl = webhook;
-
-        if (webHookUrl == null) {
-            webHookUrl = trackWebHook;
-        }
+    public void sendWebhook(String webhook, twitter4j.User user, String content, String description, List<Embed> embeds) {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSSZ");
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
         Date now = new Date();
         Embed timestampEmbed = new Embed();
-        timestampEmbed.setTimestamp(String.format("%sT%s", dateFormat.format(now), timeFormat.format(now)));
+//        Footer footer = new Footer();
+        timestampEmbed.setDescription(description);
+        timestampEmbed.setTimestamp(String.format("%sT%sZ", dateFormat.format(now), timeFormat.format(now)));
+//        timestampEmbed.setFooter(footer);
+//        timestampEmbed.setTimestamp(String.format("%sT%sZ", dateFormat.format(now), timeFormat.format(now)));
         embeds.add(timestampEmbed);
-
         try {
             webhookContent.setUsername(user.getName());
             webhookContent.setContent(String.format("@%s\n%s",user.getScreenName(), content));
             webhookContent.setAvatar_url(user.getBiggerProfileImageURLHttps());
             webhookContent.setEmbeds(embeds);
+            String json = gson.toJson(webhookContent);
+            log.info("Sending webhook: " + json);
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(webHookUrl))
-                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(webhookContent)))
+                    .uri(new URI(webhook))
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
                     .header("Content-Type", "application/json")
                     .build();
 

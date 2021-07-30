@@ -12,7 +12,7 @@ public class Embed {
 
     private String description;
 
-    private int color;
+    private String color;
 
     private List<Field> fields;
 
@@ -21,6 +21,8 @@ public class Embed {
     private Image image;
 
     private String timestamp;
+
+    private Footer footer;
 
     public Embed() {
     }
@@ -57,11 +59,11 @@ public class Embed {
         this.description = description;
     }
 
-    public int getColor() {
+    public String getColor() {
         return color;
     }
 
-    public void setColor(int color) {
+    public void setColor(String color) {
         this.color = color;
     }
 
@@ -97,6 +99,14 @@ public class Embed {
         this.timestamp = timestamp;
     }
 
+    public Footer getFooter() {
+        return footer;
+    }
+
+    public void setFooter(Footer footer) {
+        this.footer = footer;
+    }
+
     @Override
     public String toString() {
         return "Embed{" +
@@ -104,11 +114,12 @@ public class Embed {
                 ", title='" + title + '\'' +
                 ", url='" + url + '\'' +
                 ", description='" + description + '\'' +
-                ", color=" + color +
+                ", color='" + color + '\'' +
                 ", fields=" + fields +
                 ", thumbnail=" + thumbnail +
                 ", image=" + image +
                 ", timestamp='" + timestamp + '\'' +
+                ", footer=" + footer +
                 '}';
     }
 }
