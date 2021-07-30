@@ -20,15 +20,15 @@
         </encoder>
     </appender>
 
-    <logger name="org.springframework" level="WARN" additivity="false">
-        <appender-ref ref="STDOUT"/>
+    <logger name="org.springframework" level="INFO" additivity="false">
+        <appender-ref ref="FILE-ROLLING"/>
     </logger>
 
-    <logger name="twitter4j" level="WARN" additivity="false">
-        <appender-ref ref="STDOUT"/>
+    <logger name="twitter4j" level="INFO" additivity="false">
+        <appender-ref ref="FILE-ROLLING"/>
     </logger>
 
-    <root level="WARN">
-        <appender-ref ref="STDOUT"/>
+    <root level="INFO">
+        <appender-ref ref="FILE-ROLLING"/>
     </root>
 </configuration>

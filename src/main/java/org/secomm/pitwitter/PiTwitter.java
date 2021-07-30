@@ -37,7 +37,16 @@ public class PiTwitter implements CommandLineRunner {
 
         try {
             twitterHandler.initialize();
-            twitterHandler.run();
+            try {
+                while (true) {
+                    twitterHandler.run();
+                    lock.lock();
+                    condition.await(1, TimeUnit.MINUTES);
+                    lock.unlock();
+                }
+            } finally {
+                lock.unlock();
+            }
         } catch (Exception e) {
             log.error("{} caught in run method: {}", e.getClass().getSimpleName(), e.getLocalizedMessage());
         }
