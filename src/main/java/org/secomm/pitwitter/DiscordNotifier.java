@@ -23,16 +23,9 @@ import java.util.List;
 
 @Component
 @Scope("prototype")
-@PropertySource("classpath:twitter4j.properties")
 public class DiscordNotifier {
 
     private static final Logger log = LoggerFactory.getLogger(DiscordNotifier.class);
-
-    @Value("${discord.webhook.terms}")
-    private String termsWebHook;
-
-    @Value("${discord.webhook.track}")
-    private String trackWebHook;
 
     private final Gson gson;
 
@@ -53,11 +46,8 @@ public class DiscordNotifier {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
         Date now = new Date();
         Embed timestampEmbed = new Embed();
-//        Footer footer = new Footer();
         timestampEmbed.setDescription(description);
         timestampEmbed.setTimestamp(String.format("%sT%sZ", dateFormat.format(now), timeFormat.format(now)));
-//        timestampEmbed.setFooter(footer);
-//        timestampEmbed.setTimestamp(String.format("%sT%sZ", dateFormat.format(now), timeFormat.format(now)));
         embeds.add(timestampEmbed);
         try {
             webhookContent.setUsername(user.getName());

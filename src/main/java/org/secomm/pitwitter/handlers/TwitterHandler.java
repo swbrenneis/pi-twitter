@@ -33,6 +33,8 @@ public class TwitterHandler {
 
     private static final Logger log = LoggerFactory.getLogger(TwitterHandler.class);
 
+    private static final String DEV_WEBHOOK = "https://discordapp.com/api/webhooks/865325874077499433/J-2fsnn1gZCkYoebA7uq12ZFqvWixwIgfnKv2-y0y0MYHI0CWAFxOKcN9cCFUPF9gnh1";
+
     public enum Operation { ADD, DELETE }
 
     public static final String DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
@@ -87,6 +89,7 @@ public class TwitterHandler {
         databaseHandler.initialize();
         mentionsHandler.initialize(configuration);
         webhook = databaseHandler.getWebhook();
+//        webhook = DEV_WEBHOOK;
     }
 
     public String editUser(String userName, Operation operation) {

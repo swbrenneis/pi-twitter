@@ -83,7 +83,7 @@ public class DatabaseHandler {
         List<String> termsList = new ArrayList<>();
         for (String termString : global.getTerms()) {
             if (!termString.equals(term)) {
-                termsList.add(term);
+                termsList.add(termString);
             }
         }
         global.setTerms(termsList);
