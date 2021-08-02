@@ -4,11 +4,11 @@ public class UserContext {
 
     private String name;
 
-    private String lastSearched;
-
-    public UserContext(String name, String lastSearched) {
+    private long lastId;
+    
+    public UserContext(String name, long lastId) {
         this.name = name;
-        this.lastSearched = lastSearched;
+        this.lastId = lastId;
     }
 
     public String getName() {
@@ -19,19 +19,19 @@ public class UserContext {
         this.name = name;
     }
 
-    public String getLastSearched() {
-        return lastSearched;
+    public long getLastId() {
+        return lastId;
     }
 
-    public void setLastSearched(String lastSearched) {
-        this.lastSearched = lastSearched;
+    public void setLastId(long lastId) {
+        this.lastId = lastId;
     }
 
     @Override
     public String toString() {
         return "User{" +
                 "name='" + name + '\'' +
-                ", lastSearched='" + lastSearched + '\'' +
+                ", lastId='" + lastId + '\'' +
                 '}';
     }
 }

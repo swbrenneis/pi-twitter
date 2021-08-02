@@ -21,9 +21,9 @@ import java.util.List;
 
 @Component
 @PropertySource("classpath:twitter4j.properties")
-public class TwitterManager {
+public class TwitterConnector {
 
-    public static final Logger log = LoggerFactory.getLogger(TwitterManager.class);
+    public static final Logger log = LoggerFactory.getLogger(TwitterConnector.class);
 
     public static final String DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
 
@@ -60,10 +60,13 @@ public class TwitterManager {
         return twitter.showUser(userName);
     }
 
-    public List<Status> getUserTimeline(String userName, int pageSize) {
+    public List<Status> getUserTimeline(String userName, int pageSize, long lastId) {
 
         Paging paging = new Paging();
         paging.setCount(pageSize);
+        if (lastId > 0) {
+            paging.setSinceId(lastId);
+        }
         try {
             List<Status> statusList = twitter.getUserTimeline(userName, paging);
             return statusList;

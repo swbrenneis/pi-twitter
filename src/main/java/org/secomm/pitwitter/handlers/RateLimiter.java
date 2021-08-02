@@ -5,6 +5,7 @@ import org.secomm.pitwitter.discord.DiscordNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import twitter4j.Paging;
 import twitter4j.Status;
 
 import java.text.SimpleDateFormat;
@@ -45,7 +46,7 @@ public class RateLimiter implements Runnable {
 
     private static final int PAGE_SIZE = 25;
 
-    private final TwitterManager twitterManager;
+    private final TwitterConnector twitterConnector;
 
     private final DiscordNotifier discordNotifier;
 
@@ -55,10 +56,10 @@ public class RateLimiter implements Runnable {
 
     private final Lock queueLock;
 
-    public RateLimiter(final TwitterManager twitterManager,
+    public RateLimiter(final TwitterConnector twitterConnector,
                        final DiscordNotifier discordNotifier) {
 
-        this.twitterManager = twitterManager;
+        this.twitterConnector = twitterConnector;
         this.discordNotifier = discordNotifier;
         requestQueue = new ArrayDeque<>();
         webhookQueue = new ArrayDeque<>();
@@ -88,17 +89,13 @@ public class RateLimiter implements Runnable {
     private List<Status> getUserTimeline(UserContext userContext) throws Exception {
 
         log.info("Getting {} statuses for user {}", PAGE_SIZE, userContext.getName());
-        SimpleDateFormat format = new SimpleDateFormat(TwitterManager.DATE_FORMAT);
-        Date lastSearched = null;
-        String lastSearchedString = userContext.getLastSearched();
-        if (lastSearchedString != null) {
-            lastSearched = format.parse(lastSearchedString);
-        } else {
-            lastSearched = new Date();
-        }
-        List<Status> statusList = twitterManager.getUserTimeline(userContext.getName(), PAGE_SIZE);
+        List<Status> statusList = twitterConnector.getUserTimeline(userContext.getName(), PAGE_SIZE, userContext.getLastId());
 
         return statusList;
+    }
+
+    public boolean twitterReady() {
+        return requestQueue.isEmpty();
     }
 
     @Override
@@ -107,36 +104,42 @@ public class RateLimiter implements Runnable {
         Lock lock = new ReentrantLock();
         Condition condition = lock.newCondition();
         boolean run = true;
-        List<Request> bucket = new ArrayList<>();
 
         while (run) {
 
-            bucket.clear();
             queueLock.lock();
             try {
-                while (bucket.size() < BUCKET_SIZE && !requestQueue.isEmpty()) {
-                    bucket.add(requestQueue.pop());
+                log.info("Timeline request queue depth is {}", requestQueue.size());
+                while (!requestQueue.isEmpty()) {
+                    try {
+                        Request request = requestQueue.pop();
+                        List<Status> statuses = getUserTimeline(request.userContext);
+                        request.handler.receivedStatuses(statuses);
+                        Thread.sleep(1500);
+                    } catch (Exception e) {
+                        log.warn("{} caught while retrieving timelines: {}", e.getClass().getName(),
+                                e.getLocalizedMessage());
+                    }
                 }
             } finally {
                 queueLock.unlock();
             }
 
-            for (Request request : bucket) {
-                try {
-                    List<Status> statuses = getUserTimeline(request.userContext);
-                    request.handler.receivedStatuses(statuses);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
             long now = System.currentTimeMillis() / 1000;
-            while (now > discordNotifier.getSendAfter() && !webhookQueue.isEmpty()) {
-                WebHook webHook = webhookQueue.peek();
-                if (discordNotifier.sendWebhook(webHook.webhook, webHook.url)) {
-                    webhookQueue.pop();
+            try {
+                log.info("Discord notifications queue depth is {}", webhookQueue.size());
+                while (now > discordNotifier.getSendAfter() && !webhookQueue.isEmpty()) {
+                    WebHook webHook = webhookQueue.peek();
+                    if (discordNotifier.sendWebhook(webHook.webhook, webHook.url)) {
+                        webhookQueue.pop();
+                    }
+                    Thread.sleep(2000);
                 }
+            } catch (Exception e) {
+                log.warn("{} caught while sending webhooks: {}", e.getClass().getName(),
+                        e.getLocalizedMessage());
             }
-
+            // Wait for more messages
             lock.lock();
             try {
                 run = !condition.await(30, TimeUnit.SECONDS);

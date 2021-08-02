@@ -3,10 +3,9 @@ package org.secomm.pitwitter;
 import org.secomm.pitwitter.handlers.DatabaseHandler;
 import org.secomm.pitwitter.handlers.MatchHandler;
 import org.secomm.pitwitter.handlers.MentionsHandler;
-import org.secomm.pitwitter.handlers.PiStatusListener;
 import org.secomm.pitwitter.handlers.RateLimiter;
 import org.secomm.pitwitter.handlers.RestockHandler;
-import org.secomm.pitwitter.handlers.TwitterManager;
+import org.secomm.pitwitter.handlers.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +15,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -40,7 +38,7 @@ public class PiTwitter implements CommandLineRunner {
     private RestockHandler restockHandler;
 
     @Autowired
-    private TwitterManager twitterManager;
+    private TwitterConnector twitterConnector;
 
     @Autowired
     private RateLimiter rateLimiter;
@@ -62,7 +60,7 @@ public class PiTwitter implements CommandLineRunner {
 
         try {
             databaseHandler.initialize();
-            twitterManager.initialize();
+            twitterConnector.initialize();
             matchHandler.initialize();
 //            mentionsHandler.initialize();
             restockHandler.initialize();

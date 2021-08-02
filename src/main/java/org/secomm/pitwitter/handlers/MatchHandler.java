@@ -2,7 +2,6 @@ package org.secomm.pitwitter.handlers;
 
 import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.UserContext;
-import org.secomm.pitwitter.discord.DiscordNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -19,7 +18,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
-public class MatchHandler implements TwitterHandler {
+public class MatchHandler extends AbstractTwitterHandler {
 
     private static final Logger log = LoggerFactory.getLogger(MatchHandler.class);
 
@@ -29,34 +28,47 @@ public class MatchHandler implements TwitterHandler {
 
     private String webhook;
 
-    private final DatabaseHandler databaseHandler;
+    private final SimpleDateFormat dateFormat;
 
-    private final RateLimiter rateLimiter;
-
-    private final TwitterManager twitterManager;
+    private final TwitterConnector twitterConnector;
 
     public MatchHandler(final DatabaseHandler databaseHandler,
                         final RateLimiter rateLimiter,
-                        final TwitterManager twitterManager) {
-        this.databaseHandler = databaseHandler;
-        this.rateLimiter = rateLimiter;
-        this.twitterManager = twitterManager;
+                        final TwitterConnector twitterConnector) {
+        super(databaseHandler, rateLimiter);
+        this.twitterConnector = twitterConnector;
+        dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
     }
 
     public void initialize() throws TwitterException {
 
-//        webhook = databaseHandler.getGlobalWebhook();
-        webhook = DEV_WEBHOOK;
+        webhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.GLOBAL);
+//        webhook = DEV_WEBHOOK;
     }
 
     @Override
     public void receivedStatuses(List<Status> statuses) {
 
+        boolean firstpass = true;
         for (Status status : statuses) {
+            if (firstpass) {
+                String screenName = statuses.get(0).getUser().getScreenName();
+                String createdAt = dateFormat.format(statuses.get(0).getUser().getCreatedAt());
+                log.info("{} statuses received for {}, first status date is {}", statuses.size(), screenName, createdAt);
+                firstpass = false;
+            }
+            long lastId = databaseHandler.getLastId(status.getUser().getScreenName(),
+                    DatabaseHandler.DatabaseSelector.GLOBAL);
+            if (status.getId() > lastId) {
+                databaseHandler.updateLastId(status.getUser().getScreenName(), status.getId(),
+                        DatabaseHandler.DatabaseSelector.GLOBAL);
+            }
             String tweet = status.getText();
-            for (String term : databaseHandler.getGlobalTerms()) {
-                if (tweet.toUpperCase().contains(term.toUpperCase())) {
-                    sendNotification(status);
+            boolean notificationSent = false;
+            for (String term : databaseHandler.getTerms(DatabaseHandler.DatabaseSelector.GLOBAL)) {
+                if (!notificationSent && tweet.toUpperCase().contains(term.toUpperCase())) {
+                    sendNotification(webhook, status);
+                    notificationSent = true;
                 }
             }
         }
@@ -67,7 +79,7 @@ public class MatchHandler implements TwitterHandler {
         switch (operation) {
             case ADD:
                 try {
-                    User user = twitterManager.showUser(userName);
+                    User user = twitterConnector.showUser(userName);
                     if (user == null) {
                         log.warn("User {} does not exist", userName);
                         return "No such user";
@@ -114,17 +126,18 @@ public class MatchHandler implements TwitterHandler {
         Lock lock = new ReentrantLock();
         Condition condition = lock.newCondition();
         boolean run = true;
-        SimpleDateFormat dateFormat = new SimpleDateFormat(TwitterManager.DATE_FORMAT);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(TwitterConnector.DATE_FORMAT);
 
         while (run) {
             try {
-                for (UserContext userContext : databaseHandler.getGlobalUsers()) {
-                    rateLimiter.getUserTimeline(userContext, this);
-                    databaseHandler.updateGlobalSearchTime(userContext.getName(), dateFormat.format(new Date()));
+                if (rateLimiter.twitterReady()) {
+                    for (UserContext userContext : databaseHandler.getUsers(DatabaseHandler.DatabaseSelector.GLOBAL)) {
+                        rateLimiter.getUserTimeline(userContext, this);
+                    }
                 }
                 lock.lock();
                 try {
-                    run = !condition.await(3, TimeUnit.MINUTES);
+                    run = !condition.await(1, TimeUnit.MINUTES);
                 } finally {
                     lock.unlock();
                 }
@@ -132,12 +145,6 @@ public class MatchHandler implements TwitterHandler {
                 log.error("Configuration error: {}", e.getLocalizedMessage());
             }
         }
-    }
-
-    private void sendNotification(Status status) {
-
-        rateLimiter.sendDiscordNotification(webhook, String.format(DiscordNotifier.TWEET_URL_FORMAT,
-                status.getUser().getScreenName(), status.getId()));
     }
 
     public Global getGlobal() {

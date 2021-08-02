@@ -13,11 +13,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 @PropertySource("classpath:database.properties")
 public class DatabaseHandler {
 
+    public enum DatabaseSelector { GLOBAL, GROUP, RESTOCKS, GIVEAWAY }
     @Value("${db.filesLocation}")
     private String dbFilesLocation;
 
@@ -41,37 +43,91 @@ public class DatabaseHandler {
         restocks = jsonDBTemplate.findById("000002", Restocks.class);
     }
 
-    public List<UserContext> getGlobalUsers() {
-        return global.getUsers();
+    public List<UserContext> getUsers(DatabaseSelector selector) {
+        switch (selector) {
+            case GROUP:
+                return null;
+            case GLOBAL:
+                return global.getUsers();
+            case RESTOCKS:
+                return restocks.getUsers();
+            default:
+                return null;
+        }
     }
 
-    public List<UserContext> getRestocksUsers() {
-        return restocks.getUsers();
+    public void updateLastId(String username, long lastId, DatabaseSelector selector) {
+
+        String userToCompare = "@" + username.toUpperCase();
+        switch (selector) {
+            case GROUP:
+                break;
+            case GLOBAL:
+                updateGlobalLastId(userToCompare, lastId);
+                break;
+            case RESTOCKS:
+                updateRestocksLastId(userToCompare, lastId);
+                break;
+        }
     }
 
-    public void updateGlobalSearchTime(String username, String searchTime) {
+    private void updateGlobalLastId(String userToCompare, long lastId) {
 
         for (UserContext userContext : global.getUsers()) {
-            if (userContext.getName().equals(username)) {
-                userContext.setLastSearched(searchTime);
+            if (userContext.getName().toUpperCase().equals(userToCompare)) {
+                userContext.setLastId(lastId);
                 jsonDBTemplate.upsert(global);
             }
         }
     }
 
-    public void updateRestocksSearchTime(String username, String searchTime) {
+    public long getLastId(String userName, DatabaseSelector selector) {
+
+        String userToCompare = "@" + userName.toUpperCase();
+        switch (selector) {
+            case GROUP:
+                return 0;
+            case GLOBAL:
+                return getGlobalLastId(userToCompare);
+            case RESTOCKS:
+                return getRestocksLastId(userToCompare);
+            default:
+                return 0;
+        }
+    }
+
+    private long getGlobalLastId(String userToCompare) {
+
+        for (UserContext userContext : global.getUsers()) {
+            if (userContext.getName().toUpperCase().equals(userToCompare)) {
+                return userContext.getLastId();
+            }
+        }
+        return 0;
+    }
+
+    private long getRestocksLastId(String userToCompare) {
 
         for (UserContext userContext : restocks.getUsers()) {
-            if (userContext.getName().equals(username)) {
-                userContext.setLastSearched(searchTime);
+            if (userContext.getName().toUpperCase().equals(userToCompare)) {
+                return userContext.getLastId();
+            }
+        }
+        return 0;
+    }
+
+    private void updateRestocksLastId(String userToCompare, long lastId) {
+
+        for (UserContext userContext : restocks.getUsers()) {
+            if (userContext.getName().toUpperCase().equals(userToCompare)) {
+                userContext.setLastId(lastId);
                 jsonDBTemplate.upsert(restocks);
             }
         }
     }
 
     public void addUser(String username) {
-        SimpleDateFormat format = new SimpleDateFormat(TwitterManager.DATE_FORMAT);
-        UserContext userContext = new UserContext(username, format.format(new Date()));
+        UserContext userContext = new UserContext(username, 0);
         global.getUsers().add(userContext);
         jsonDBTemplate.upsert(global);
     }
@@ -88,12 +144,17 @@ public class DatabaseHandler {
         jsonDBTemplate.upsert(global);
     }
 
-    public List<String> getGlobalTerms() {
-        return global.getTerms();
-    }
-
-    public List<String> getRestocksTerms() {
-        return restocks.getTerms();
+    public List<String> getTerms(DatabaseSelector selector) {
+        switch (selector) {
+            case GROUP:
+                return null;
+            case GLOBAL:
+                return global.getTerms();
+            case RESTOCKS:
+                return restocks.getTerms();
+            default:
+                return null;
+        }
     }
 
     public void addTerm(String term) {
@@ -112,16 +173,19 @@ public class DatabaseHandler {
         jsonDBTemplate.upsert(global);
     }
 
-    public String getGlobalWebhook() {
-        return global.getWebhook();
-    }
-
-    public String getRestocksWebhook() {
-        return restocks.getRestockWebhook();
-    }
-
-    public String getGiveawayWebhook() {
-        return restocks.getGiveawayWebhook();
+    public String getWebhook(DatabaseSelector selector) {
+        switch (selector) {
+            case GROUP:
+                return null;
+            case GLOBAL:
+                return global.getWebhook();
+            case RESTOCKS:
+                return restocks.getRestockWebhook();
+            case GIVEAWAY:
+                return restocks.getGiveawayWebhook();
+            default:
+                return null;
+        }
     }
 
     public void setWebhook(String webhook) {

@@ -40,7 +40,7 @@ public class DatabaseLoader {
             BufferedReader reader = new BufferedReader(new FileReader("Bot_Restock_Accounts.txt"));
             String username = reader.readLine();
             while (username != null) {
-                UserContext userContext = new UserContext(username, "31-07-2021 22:14:37");
+                UserContext userContext = new UserContext(username, 0);
                 restocks.getUsers().add(userContext);
                 username = reader.readLine();
             }
