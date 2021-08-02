@@ -3,6 +3,7 @@ package org.secomm.pitwitter.handlers;
 import io.jsondb.JsonDBTemplate;
 import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.Groups;
+import org.secomm.pitwitter.config.Restocks;
 import org.secomm.pitwitter.config.UserContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -27,21 +28,28 @@ public class DatabaseHandler {
 
     private Groups groups;
 
+    private Restocks restocks;
+
     private JsonDBTemplate jsonDBTemplate;
 
     public void initialize() {
 
         jsonDBTemplate = new JsonDBTemplate(dbFilesLocation, dbBaseScanPackage, null);
+//        new DatabaseLoader().loadDatabase(jsonDBTemplate);
+
         global = jsonDBTemplate.findById("000001", Global.class);
-//        global = new Global("000001", new ArrayList<>(), new ArrayList<>());
-//        jsonDBTemplate.upsert(global);
+        restocks = jsonDBTemplate.findById("000002", Restocks.class);
     }
 
-    public List<UserContext> getUsers() {
+    public List<UserContext> getGlobalUsers() {
         return global.getUsers();
     }
 
-    public void updateSearchTime(String username, String searchTime) {
+    public List<UserContext> getRestocksUsers() {
+        return restocks.getUsers();
+    }
+
+    public void updateGlobalSearchTime(String username, String searchTime) {
 
         for (UserContext userContext : global.getUsers()) {
             if (userContext.getName().equals(username)) {
@@ -51,8 +59,18 @@ public class DatabaseHandler {
         }
     }
 
+    public void updateRestocksSearchTime(String username, String searchTime) {
+
+        for (UserContext userContext : restocks.getUsers()) {
+            if (userContext.getName().equals(username)) {
+                userContext.setLastSearched(searchTime);
+                jsonDBTemplate.upsert(restocks);
+            }
+        }
+    }
+
     public void addUser(String username) {
-        SimpleDateFormat format = new SimpleDateFormat(TwitterHandler.DATE_FORMAT);
+        SimpleDateFormat format = new SimpleDateFormat(TwitterManager.DATE_FORMAT);
         UserContext userContext = new UserContext(username, format.format(new Date()));
         global.getUsers().add(userContext);
         jsonDBTemplate.upsert(global);
@@ -70,8 +88,12 @@ public class DatabaseHandler {
         jsonDBTemplate.upsert(global);
     }
 
-    public List<String> getTerms() {
+    public List<String> getGlobalTerms() {
         return global.getTerms();
+    }
+
+    public List<String> getRestocksTerms() {
+        return restocks.getTerms();
     }
 
     public void addTerm(String term) {
@@ -90,8 +112,16 @@ public class DatabaseHandler {
         jsonDBTemplate.upsert(global);
     }
 
-    public String getWebhook() {
+    public String getGlobalWebhook() {
         return global.getWebhook();
+    }
+
+    public String getRestocksWebhook() {
+        return restocks.getRestockWebhook();
+    }
+
+    public String getGiveawayWebhook() {
+        return restocks.getGiveawayWebhook();
     }
 
     public void setWebhook(String webhook) {
@@ -101,5 +131,9 @@ public class DatabaseHandler {
 
     public Global getGlobal() {
         return global;
+    }
+
+    public Restocks getRestocks() {
+        return restocks;
     }
 }

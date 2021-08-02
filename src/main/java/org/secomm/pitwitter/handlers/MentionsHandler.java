@@ -1,6 +1,5 @@
 package org.secomm.pitwitter.handlers;
 
-import org.secomm.pitwitter.DiscordNotifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -18,15 +17,19 @@ public class MentionsHandler {
 
     private final PiStatusListener piStatusListener;
 
+    private final TwitterManager twitterManager;
+
     private TwitterStream stream;
 
-    public MentionsHandler(final PiStatusListener piStatusListener) {
+    public MentionsHandler(final PiStatusListener piStatusListener,
+                           final TwitterManager twitterManager) {
         this.piStatusListener = piStatusListener;
+        this.twitterManager = twitterManager;
     }
 
-    public void initialize(Configuration configuration) {
+    public void initialize() {
 
-        TwitterStreamFactory factory = new TwitterStreamFactory(configuration);
+        TwitterStreamFactory factory = new TwitterStreamFactory(twitterManager.getConfiguration());
         stream = factory.getInstance();
         stream.addListener(piStatusListener);
         FilterQuery filterQuery = new FilterQuery();

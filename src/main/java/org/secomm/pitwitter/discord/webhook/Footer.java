@@ -1,4 +1,4 @@
-package org.secomm.pitwitter.webhook;
+package org.secomm.pitwitter.discord.webhook;
 
 public class Footer {
 
@@ -6,12 +6,15 @@ public class Footer {
 
     private String icon_url;
 
+    private String proxy_icon_url;
+
     public Footer() {
     }
 
-    public Footer(String text, String icon_url) {
+    public Footer(String text, String icon_url, String proxy_icon_url) {
         this.text = text;
         this.icon_url = icon_url;
+        this.proxy_icon_url = proxy_icon_url;
     }
 
     public String getText() {
@@ -30,11 +33,20 @@ public class Footer {
         this.icon_url = icon_url;
     }
 
+    public String getProxy_icon_url() {
+        return proxy_icon_url;
+    }
+
+    public void setProxy_icon_url(String proxy_icon_url) {
+        this.proxy_icon_url = proxy_icon_url;
+    }
+
     @Override
     public String toString() {
         return "Footer{" +
                 "text='" + text + '\'' +
                 ", icon_url='" + icon_url + '\'' +
+                ", proxy_icon_url='" + proxy_icon_url + '\'' +
                 '}';
     }
 }

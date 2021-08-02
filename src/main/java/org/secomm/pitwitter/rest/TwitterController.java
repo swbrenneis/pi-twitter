@@ -1,10 +1,8 @@
 package org.secomm.pitwitter.rest;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.UserContext;
-import org.secomm.pitwitter.handlers.TwitterHandler;
+import org.secomm.pitwitter.handlers.MatchHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -23,10 +21,10 @@ public class TwitterController {
 
     private final Logger log = LoggerFactory.getLogger(TwitterController.class);
 
-    private final TwitterHandler twitterHandler;
+    private final MatchHandler twitterHandler;
 
-    public TwitterController(final TwitterHandler twitterHandler) {
-        this.twitterHandler = twitterHandler;
+    public TwitterController(final MatchHandler matchHandler) {
+        this.twitterHandler = matchHandler;
     }
 
     @GetMapping(value = "/get-global", produces = "application/json")
@@ -44,10 +42,10 @@ public class TwitterController {
         String result = null;
         switch (edits.getEditAction()) {
             case ADD:
-                result = twitterHandler.editUser(edits.getEdits().get(0), TwitterHandler.Operation.ADD);
+                result = twitterHandler.editUser(edits.getEdits().get(0), MatchHandler.Operation.ADD);
                 break;
             case DELETE:
-                result = twitterHandler.editUser(edits.getEdits().get(0), TwitterHandler.Operation.DELETE);
+                result = twitterHandler.editUser(edits.getEdits().get(0), MatchHandler.Operation.DELETE);
                 break;
         }
         return new EditResponse(result, getGlobalValues(twitterHandler.getGlobal()));
@@ -62,10 +60,10 @@ public class TwitterController {
         String result = null;
         switch (edits.getEditAction()) {
             case ADD:
-                result = twitterHandler.editTerms(edits.getEdits(), TwitterHandler.Operation.ADD);
+                result = twitterHandler.editTerms(edits.getEdits(), MatchHandler.Operation.ADD);
                 break;
             case DELETE:
-                result = twitterHandler.editTerms(edits.getEdits(), TwitterHandler.Operation.DELETE);
+                result = twitterHandler.editTerms(edits.getEdits(), MatchHandler.Operation.DELETE);
                 break;
         }
         return new EditResponse(result, getGlobalValues(twitterHandler.getGlobal()));

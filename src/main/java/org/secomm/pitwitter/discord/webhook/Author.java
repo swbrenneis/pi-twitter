@@ -1,4 +1,4 @@
-package org.secomm.pitwitter.webhook;
+package org.secomm.pitwitter.discord.webhook;
 
 public class Author {
 
@@ -8,10 +8,13 @@ public class Author {
 
     private String icon_url;
 
-    public Author(String name, String url, String icon_url) {
+    private String proxy_icon_url;
+
+    public Author(String name, String url, String icon_url, String proxy_icon_url) {
         this.name = name;
         this.url = url;
         this.icon_url = icon_url;
+        this.proxy_icon_url = proxy_icon_url;
     }
 
     public String getName() {
@@ -38,12 +41,21 @@ public class Author {
         this.icon_url = icon_url;
     }
 
+    public String getProxy_icon_url() {
+        return proxy_icon_url;
+    }
+
+    public void setProxy_icon_url(String proxy_icon_url) {
+        this.proxy_icon_url = proxy_icon_url;
+    }
+
     @Override
     public String toString() {
         return "Author{" +
                 "name='" + name + '\'' +
                 ", url='" + url + '\'' +
                 ", icon_url='" + icon_url + '\'' +
+                ", proxy_icon_url='" + proxy_icon_url + '\'' +
                 '}';
     }
 }
