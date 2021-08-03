@@ -104,15 +104,19 @@ public class RateLimiter implements Runnable {
         Lock lock = new ReentrantLock();
         Condition condition = lock.newCondition();
         boolean run = true;
+        Deque<Request> bucket = new ArrayDeque<>();
 
         while (run) {
-
             queueLock.lock();
+            bucket.clear();
+            while (!requestQueue.isEmpty() && bucket.size() < 45) {
+                bucket.addLast(requestQueue.pop());
+            }
             try {
                 log.info("Timeline request queue depth is {}", requestQueue.size());
-                while (!requestQueue.isEmpty()) {
+                while (!bucket.isEmpty()) {
                     try {
-                        Request request = requestQueue.pop();
+                        Request request = bucket.pop();
                         List<Status> statuses = getUserTimeline(request.userContext);
                         request.handler.receivedStatuses(statuses);
                         Thread.sleep(1500);
@@ -139,14 +143,17 @@ public class RateLimiter implements Runnable {
                 log.warn("{} caught while sending webhooks: {}", e.getClass().getName(),
                         e.getLocalizedMessage());
             }
+
             // Wait for more messages
-            lock.lock();
-            try {
-                run = !condition.await(30, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                lock.unlock();
+            if (requestQueue.isEmpty()) {
+                lock.lock();
+                try {
+                    run = !condition.await(10, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    lock.unlock();
+                }
             }
         }
     }
