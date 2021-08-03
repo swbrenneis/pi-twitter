@@ -62,7 +62,7 @@ public class PiTwitter implements CommandLineRunner {
             databaseHandler.initialize();
             twitterConnector.initialize();
             matchHandler.initialize();
-//            mentionsHandler.initialize();
+            mentionsHandler.initialize();
             restockHandler.initialize();
 
             executor.submit(matchHandler);
