@@ -67,6 +67,7 @@ public class MatchHandler extends AbstractTwitterHandler {
             boolean notificationSent = false;
             for (String term : databaseHandler.getTerms(DatabaseHandler.DatabaseSelector.GLOBAL)) {
                 if (!notificationSent && tweet.toUpperCase().contains(term.toUpperCase())) {
+                    log.info("{} matched {}", status.getUser().getScreenName(), term);
                     sendNotification(webhook, status);
                     notificationSent = true;
                 }
