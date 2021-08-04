@@ -1,5 +1,7 @@
 package org.secomm.pitwitter.handlers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -10,6 +12,8 @@ import twitter4j.TwitterStreamFactory;
 @Component
 @PropertySource("classpath:twitter4j.properties")
 public class MentionsHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(MentionsHandler.class);
 
     @Value("${stream.track}")
     private String streamTrack;
@@ -34,6 +38,8 @@ public class MentionsHandler {
         FilterQuery filterQuery = new FilterQuery();
         filterQuery.track(streamTrack);
         stream.filter(filterQuery);
+
+        log.info("Mentions handler initialized");
     }
 
 
