@@ -88,7 +88,7 @@ public class RateLimiter implements Runnable {
 
     private List<Status> getUserTimeline(UserContext userContext) throws Exception {
 
-        log.info("Getting {} statuses for user {}", PAGE_SIZE, userContext.getName());
+        log.debug("Getting {} statuses for user {}", PAGE_SIZE, userContext.getName());
         List<Status> statusList = twitterConnector.getUserTimeline(userContext.getName(), PAGE_SIZE, userContext.getLastId());
 
         return statusList;
@@ -109,11 +109,11 @@ public class RateLimiter implements Runnable {
         while (run) {
             queueLock.lock();
             bucket.clear();
+            log.info("Timeline request queue depth is {}", requestQueue.size());
             while (!requestQueue.isEmpty() && bucket.size() < 45) {
                 bucket.addLast(requestQueue.pop());
             }
             try {
-                log.info("Timeline request queue depth is {}", requestQueue.size());
                 while (!bucket.isEmpty()) {
                     try {
                         Request request = bucket.pop();
