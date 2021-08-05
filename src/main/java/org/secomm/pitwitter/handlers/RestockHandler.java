@@ -38,9 +38,9 @@ public class RestockHandler extends AbstractTwitterHandler {
 
     public void initialize() throws Exception {
 
-//        restockWebhook = DEV_WEBHOOK;
-//        giveawayWebhook = DEV_WEBHOOK;
-        restockWebhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.GLOBAL);
+        restockWebhook = DEV_WEBHOOK;
+        giveawayWebhook = DEV_WEBHOOK;
+        restockWebhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.RESTOCKS);
         giveawayWebhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.GIVEAWAY);
     }
 
