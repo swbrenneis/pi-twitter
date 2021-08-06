@@ -64,8 +64,14 @@ public class RestockHandler extends AbstractTwitterHandler {
             String tweet = status.getText();
             boolean notificationSent = false;
             if (tweet.toUpperCase().contains("RESTOCK")) {
-                log.info("{} matched RESTOCK", status.getUser().getScreenName());
-                sendNotification(restockWebhook, status);
+                boolean excluded = false;
+                for (String exclude : databaseHandler.getExcludes()) {
+                    excluded |= tweet.toUpperCase().contains(exclude.toUpperCase());
+                }
+                if (!excluded) {
+                    log.info("{} matched RESTOCK", status.getUser().getScreenName());
+                    sendNotification(restockWebhook, status);
+                }
             } else {
                 for (String term : databaseHandler.getTerms(DatabaseHandler.DatabaseSelector.RESTOCKS)) {
                     if (!notificationSent && tweet.toUpperCase().contains(term.toUpperCase())) {

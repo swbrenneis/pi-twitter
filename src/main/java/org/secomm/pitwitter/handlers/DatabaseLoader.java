@@ -36,6 +36,7 @@ public class DatabaseLoader {
             Restocks restocks = new Restocks();
             restocks.setTerms(new ArrayList<>());
             restocks.setUsers(new ArrayList<>());
+            restocks.setExcludes(new ArrayList<>());
 
             BufferedReader reader = new BufferedReader(new FileReader("Bot_Restock_Accounts.txt"));
             String username = reader.readLine();

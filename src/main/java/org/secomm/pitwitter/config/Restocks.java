@@ -15,6 +15,8 @@ public class Restocks {
 
     private List<String> terms;
 
+    private List<String> excludes;
+
     private String restockWebhook;
 
     private String giveawayWebhook;
@@ -23,11 +25,12 @@ public class Restocks {
         id = "000002";
     }
 
-    public Restocks(String id, List<UserContext> users, List<String> terms, String restockWebhook,
-                    String giveawayWebhook) {
+    public Restocks(String id, List<UserContext> users, List<String> terms, List<String> excludes,
+                    String restockWebhook, String giveawayWebhook) {
         this.id = id;
         this.users = users;
         this.terms = terms;
+        this.excludes = excludes;
         this.restockWebhook = restockWebhook;
         this.giveawayWebhook = giveawayWebhook;
     }
@@ -56,6 +59,14 @@ public class Restocks {
         this.terms = terms;
     }
 
+    public List<String> getExcludes() {
+        return excludes;
+    }
+
+    public void setExcludes(List<String> excludes) {
+        this.excludes = excludes;
+    }
+
     public String getRestockWebhook() {
         return restockWebhook;
     }
@@ -78,8 +89,9 @@ public class Restocks {
                 "id='" + id + '\'' +
                 ", users=" + users +
                 ", terms=" + terms +
+                ", excludes=" + excludes +
                 ", restockWebhook='" + restockWebhook + '\'' +
-                ", giveawayRestock='" + giveawayWebhook + '\'' +
+                ", giveawayWebhook='" + giveawayWebhook + '\'' +
                 '}';
     }
 }

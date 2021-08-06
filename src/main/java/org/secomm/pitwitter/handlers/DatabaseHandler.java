@@ -173,6 +173,10 @@ public class DatabaseHandler {
         jsonDBTemplate.upsert(global);
     }
 
+    public List<String> getExcludes() {
+        return restocks.getExcludes();
+    }
+
     public String getWebhook(DatabaseSelector selector) {
         switch (selector) {
             case GROUP:
