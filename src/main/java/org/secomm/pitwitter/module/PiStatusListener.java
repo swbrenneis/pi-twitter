@@ -1,6 +1,7 @@
-package org.secomm.pitwitter.handlers;
+package org.secomm.pitwitter.module;
 
 import org.secomm.pitwitter.discord.DiscordNotifier;
+import org.secomm.pitwitter.module.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

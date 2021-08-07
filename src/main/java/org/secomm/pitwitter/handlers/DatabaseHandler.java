@@ -1,19 +1,21 @@
 package org.secomm.pitwitter.handlers;
 
 import io.jsondb.JsonDBTemplate;
+import org.secomm.pitwitter.config.Module;
+import org.secomm.pitwitter.config.FollowContext;
 import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.Groups;
+import org.secomm.pitwitter.config.Modules;
 import org.secomm.pitwitter.config.Restocks;
 import org.secomm.pitwitter.config.UserContext;
+import org.secomm.pitwitter.loaders.FollowDatabaseLoader;
+import org.secomm.pitwitter.loaders.GlobalDatabaseLoader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 @Component
 @PropertySource("classpath:database.properties")
@@ -32,15 +34,20 @@ public class DatabaseHandler {
 
     private Restocks restocks;
 
+    private Modules modules;
+
     private JsonDBTemplate jsonDBTemplate;
 
     public void initialize() {
 
         jsonDBTemplate = new JsonDBTemplate(dbFilesLocation, dbBaseScanPackage, null);
-//        new DatabaseLoader().loadDatabase(jsonDBTemplate);
+//        new RestocksDatabaseLoader().loadDatabase(jsonDBTemplate);
+//        new FollowDatabaseLoader().loadDatabase(jsonDBTemplate);
 
         global = jsonDBTemplate.findById("000001", Global.class);
-        restocks = jsonDBTemplate.findById("000002", Restocks.class);
+        new GlobalDatabaseLoader().loadDatabase(global);
+//        restocks = jsonDBTemplate.findById("000002", Restocks.class);
+//        modules = jsonDBTemplate.findById("000003", Modules.class);
     }
 
     public List<UserContext> getUsers(DatabaseSelector selector) {
@@ -56,6 +63,16 @@ public class DatabaseHandler {
         }
     }
 
+    public List<FollowContext> getFollowing(String name) {
+
+        for (Module module : modules.getModules()) {
+            if (module.getName().equals(name)) {
+                return module.getFollowing();
+            }
+        }
+        return null;
+    }
+
     public void updateLastId(String username, long lastId, DatabaseSelector selector) {
 
         String userToCompare = "@" + username.toUpperCase();
@@ -68,6 +85,20 @@ public class DatabaseHandler {
             case RESTOCKS:
                 updateRestocksLastId(userToCompare, lastId);
                 break;
+        }
+    }
+
+    public void updateLastId(String username, long lastId, String modulename) {
+
+        for (Module module : modules.getModules()) {
+            if (module.getName().equals(modulename)) {
+                for (FollowContext followContext : module.getFollowing()) {
+                    if (followContext.getUsername().equals(username)) {
+                        followContext.setLastId(lastId);
+                        jsonDBTemplate.upsert(modules);
+                    }
+                }
+            }
         }
     }
 
@@ -94,6 +125,20 @@ public class DatabaseHandler {
             default:
                 return 0;
         }
+    }
+
+    public long getLastId(String username, String modulename) {
+
+        for (Module module : modules.getModules()) {
+            if (module.getName().equals(modulename)) {
+                for (FollowContext followContext : module.getFollowing()) {
+                    if (followContext.getUsername().equals(username)) {
+                        return followContext.getLastId();
+                    }
+                }
+            }
+        }
+        return 0;
     }
 
     private long getGlobalLastId(String userToCompare) {
@@ -190,6 +235,20 @@ public class DatabaseHandler {
             default:
                 return null;
         }
+    }
+
+    public String getWebhook(String username, String modulename) {
+
+        for (Module module : modules.getModules()) {
+            if (module.getName().equals(modulename)) {
+                for (FollowContext followContext : module.getFollowing()) {
+                    if (followContext.getUsername().equals(username)) {
+                        return followContext.getWebhook();
+                    }
+                }
+            }
+        }
+        return "";
     }
 
     public void setWebhook(String webhook) {

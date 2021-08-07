@@ -2,7 +2,7 @@ package org.secomm.pitwitter.rest;
 
 import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.UserContext;
-import org.secomm.pitwitter.handlers.MatchHandler;
+import org.secomm.pitwitter.module.MatchModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -21,9 +21,9 @@ public class TwitterController {
 
     private final Logger log = LoggerFactory.getLogger(TwitterController.class);
 
-    private final MatchHandler twitterHandler;
+    private final MatchModule twitterHandler;
 
-    public TwitterController(final MatchHandler matchHandler) {
+    public TwitterController(final MatchModule matchHandler) {
         this.twitterHandler = matchHandler;
     }
 
@@ -42,10 +42,10 @@ public class TwitterController {
         String result = null;
         switch (edits.getEditAction()) {
             case ADD:
-                result = twitterHandler.editUser(edits.getEdits().get(0), MatchHandler.Operation.ADD);
+                result = twitterHandler.editUser(edits.getEdits().get(0), MatchModule.Operation.ADD);
                 break;
             case DELETE:
-                result = twitterHandler.editUser(edits.getEdits().get(0), MatchHandler.Operation.DELETE);
+                result = twitterHandler.editUser(edits.getEdits().get(0), MatchModule.Operation.DELETE);
                 break;
         }
         return new EditResponse(result, getGlobalValues(twitterHandler.getGlobal()));
@@ -60,10 +60,10 @@ public class TwitterController {
         String result = null;
         switch (edits.getEditAction()) {
             case ADD:
-                result = twitterHandler.editTerms(edits.getEdits(), MatchHandler.Operation.ADD);
+                result = twitterHandler.editTerms(edits.getEdits(), MatchModule.Operation.ADD);
                 break;
             case DELETE:
-                result = twitterHandler.editTerms(edits.getEdits(), MatchHandler.Operation.DELETE);
+                result = twitterHandler.editTerms(edits.getEdits(), MatchModule.Operation.DELETE);
                 break;
         }
         return new EditResponse(result, getGlobalValues(twitterHandler.getGlobal()));

@@ -1,4 +1,4 @@
-package org.secomm.pitwitter.handlers;
+package org.secomm.pitwitter.loaders;
 
 import io.jsondb.JsonDBTemplate;
 import org.secomm.pitwitter.config.Restocks;
@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class DatabaseLoader {
+public class RestocksDatabaseLoader {
 
     private static final String RESTOCK_WEBHOOK = "https://discord.com/api/webhooks/871412406386053131/wxte26UjP7xSWFnmGoYpqGD6_ot3Fm7Bi6MQXTi-DaRkyTZ62g9jEctuiBj4-YOtGz4u";
 

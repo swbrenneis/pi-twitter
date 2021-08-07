@@ -1,17 +1,15 @@
-package org.secomm.pitwitter.handlers;
+package org.secomm.pitwitter.module;
 
+import org.secomm.pitwitter.config.FollowContext;
 import org.secomm.pitwitter.config.UserContext;
 import org.secomm.pitwitter.discord.DiscordNotifier;
+import org.secomm.pitwitter.handlers.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import twitter4j.Paging;
 import twitter4j.Status;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -24,8 +22,8 @@ public class RateLimiter implements Runnable {
 
     private static final class Request{
         public UserContext userContext;
-        public TwitterHandler handler;
-        public Request(UserContext userContext, TwitterHandler handler) {
+        public TwitterModule handler;
+        public Request(UserContext userContext, TwitterModule handler) {
             this.userContext = userContext;
             this.handler = handler;
         }
@@ -66,11 +64,22 @@ public class RateLimiter implements Runnable {
         queueLock = new ReentrantLock();
     }
 
-    public void getUserTimeline(UserContext userContext, TwitterHandler handler) {
+    public void getUserTimeline(UserContext userContext, TwitterModule handler) {
 
         queueLock.lock();
         try {
             requestQueue.addLast(new Request(userContext, handler));
+        } finally {
+            queueLock.unlock();
+        }
+    }
+
+    public void getUserTimeline(FollowContext followContext, TwitterModule handler) {
+
+        queueLock.lock();
+        try {
+            requestQueue.addLast(new Request(new UserContext(followContext.getUsername(), followContext.getLastId()),
+                    handler));
         } finally {
             queueLock.unlock();
         }

@@ -1,5 +1,6 @@
-package org.secomm.pitwitter.handlers;
+package org.secomm.pitwitter.module;
 
+import org.secomm.pitwitter.handlers.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,9 +12,9 @@ import twitter4j.TwitterStreamFactory;
 
 @Component
 @PropertySource("classpath:twitter4j.properties")
-public class MentionsHandler {
+public class MentionsModule {
 
-    private static final Logger log = LoggerFactory.getLogger(MentionsHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(MentionsModule.class);
 
     @Value("${stream.track}")
     private String streamTrack;
@@ -24,8 +25,8 @@ public class MentionsHandler {
 
     private TwitterStream stream;
 
-    public MentionsHandler(final PiStatusListener piStatusListener,
-                           final TwitterConnector twitterConnector) {
+    public MentionsModule(final PiStatusListener piStatusListener,
+                          final TwitterConnector twitterConnector) {
         this.piStatusListener = piStatusListener;
         this.twitterConnector = twitterConnector;
     }

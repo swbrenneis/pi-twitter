@@ -1,14 +1,13 @@
-package org.secomm.pitwitter.handlers;
+package org.secomm.pitwitter.module;
 
 import org.secomm.pitwitter.config.UserContext;
-import org.secomm.pitwitter.discord.DiscordNotifier;
+import org.secomm.pitwitter.handlers.DatabaseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import twitter4j.Status;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -16,9 +15,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
-public class RestockHandler extends AbstractTwitterHandler {
+public class RestockModule extends AbstractTwitterModule {
 
-    private static final Logger log = LoggerFactory.getLogger(RestockHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(RestockModule.class);
 
     private static final String DEV_WEBHOOK = "https://discordapp.com/api/webhooks/865325874077499433/J-2fsnn1gZCkYoebA7uq12ZFqvWixwIgfnKv2-y0y0MYHI0CWAFxOKcN9cCFUPF9gnh1";
 
@@ -30,8 +29,8 @@ public class RestockHandler extends AbstractTwitterHandler {
 
     private SimpleDateFormat dateFormat;
 
-    public RestockHandler(final RateLimiter rateLimiter,
-                          final DatabaseHandler databaseHandler) {
+    public RestockModule(final RateLimiter rateLimiter,
+                         final DatabaseHandler databaseHandler) {
         super(databaseHandler, rateLimiter);
         dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
     }

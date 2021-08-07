@@ -1,10 +1,11 @@
 package org.secomm.pitwitter;
 
 import org.secomm.pitwitter.handlers.DatabaseHandler;
-import org.secomm.pitwitter.handlers.MatchHandler;
-import org.secomm.pitwitter.handlers.MentionsHandler;
-import org.secomm.pitwitter.handlers.RateLimiter;
-import org.secomm.pitwitter.handlers.RestockHandler;
+import org.secomm.pitwitter.module.FollowModule;
+import org.secomm.pitwitter.module.MatchModule;
+import org.secomm.pitwitter.module.MentionsModule;
+import org.secomm.pitwitter.module.RateLimiter;
+import org.secomm.pitwitter.module.RestockModule;
 import org.secomm.pitwitter.handlers.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,13 +30,16 @@ public class PiTwitter implements CommandLineRunner {
     private DatabaseHandler databaseHandler;
 
     @Autowired
-    private MatchHandler matchHandler;
+    private MatchModule matchHandler;
 
     @Autowired
-    private MentionsHandler mentionsHandler;
+    private MentionsModule mentionsHandler;
 
     @Autowired
-    private RestockHandler restockHandler;
+    private RestockModule restockHandler;
+
+    @Autowired
+    private FollowModule bncModule;
 
     @Autowired
     private TwitterConnector twitterConnector;
@@ -52,7 +56,7 @@ public class PiTwitter implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        executor = Executors.newFixedThreadPool(3);
+        executor = Executors.newFixedThreadPool(4);
         Lock lock;
         Condition condition;
         lock = new ReentrantLock();
@@ -64,10 +68,12 @@ public class PiTwitter implements CommandLineRunner {
             matchHandler.initialize();
             mentionsHandler.initialize();
             restockHandler.initialize();
+            bncModule.initialize("botncop");
 
-            executor.submit(matchHandler);
-            executor.submit(restockHandler);
-            executor.submit(rateLimiter);
+//            executor.submit(matchHandler);
+//            executor.submit(restockHandler);
+//            executor.submit(rateLimiter);
+            executor.submit(bncModule);
 
             try {
                 while (true) {

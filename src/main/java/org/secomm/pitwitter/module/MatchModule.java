@@ -1,7 +1,9 @@
-package org.secomm.pitwitter.handlers;
+package org.secomm.pitwitter.module;
 
 import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.UserContext;
+import org.secomm.pitwitter.handlers.DatabaseHandler;
+import org.secomm.pitwitter.handlers.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -10,7 +12,6 @@ import twitter4j.TwitterException;
 import twitter4j.User;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -18,9 +19,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
-public class MatchHandler extends AbstractTwitterHandler {
+public class MatchModule extends AbstractTwitterModule {
 
-    private static final Logger log = LoggerFactory.getLogger(MatchHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(MatchModule.class);
 
     private static final String DEV_WEBHOOK = "https://discordapp.com/api/webhooks/865325874077499433/J-2fsnn1gZCkYoebA7uq12ZFqvWixwIgfnKv2-y0y0MYHI0CWAFxOKcN9cCFUPF9gnh1";
 
@@ -32,9 +33,9 @@ public class MatchHandler extends AbstractTwitterHandler {
 
     private final TwitterConnector twitterConnector;
 
-    public MatchHandler(final DatabaseHandler databaseHandler,
-                        final RateLimiter rateLimiter,
-                        final TwitterConnector twitterConnector) {
+    public MatchModule(final DatabaseHandler databaseHandler,
+                       final RateLimiter rateLimiter,
+                       final TwitterConnector twitterConnector) {
         super(databaseHandler, rateLimiter);
         this.twitterConnector = twitterConnector;
         dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
@@ -53,8 +54,7 @@ public class MatchHandler extends AbstractTwitterHandler {
         for (Status status : statuses) {
             if (firstpass) {
                 String screenName = statuses.get(0).getUser().getScreenName();
-                String createdAt = dateFormat.format(statuses.get(0).getUser().getCreatedAt());
-                log.info("{} statuses received for {}, first status date is {}", statuses.size(), screenName, createdAt);
+                log.info("{} statuses received for {}", statuses.size(), screenName);
                 firstpass = false;
             }
             long lastId = databaseHandler.getLastId(status.getUser().getScreenName(),
