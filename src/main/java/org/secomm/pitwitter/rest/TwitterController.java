@@ -30,7 +30,8 @@ public class TwitterController {
     @GetMapping(value = "/get-global", produces = "application/json")
     @CrossOrigin
     public GlobalValues getGlobal() {
-        return getGlobalValues(twitterHandler.getGlobal());
+//        return getGlobalValues(twitterHandler.getGlobal());
+        return new GlobalValues();
     }
 
     @PostMapping(value = "/edit-global-user", consumes = "application/json", produces = "application/json")
@@ -48,7 +49,8 @@ public class TwitterController {
                 result = twitterHandler.editUser(edits.getEdits().get(0), MatchModule.Operation.DELETE);
                 break;
         }
-        return new EditResponse(result, getGlobalValues(twitterHandler.getGlobal()));
+//        return new EditResponse(result, getGlobalValues(twitterHandler.getGlobal()));
+        return new EditResponse();
     }
 
     @PostMapping(value = "/edit-global-terms", consumes = "application/json", produces = "application/json")
@@ -66,7 +68,8 @@ public class TwitterController {
                 result = twitterHandler.editTerms(edits.getEdits(), MatchModule.Operation.DELETE);
                 break;
         }
-        return new EditResponse(result, getGlobalValues(twitterHandler.getGlobal()));
+//        return new EditResponse(result, getGlobalValues(twitterHandler.getGlobal()));
+        return new EditResponse();
     }
 
     @PostMapping(value = "/edit-global-webhook", consumes = "application/json", produces = "application/json")
@@ -77,7 +80,8 @@ public class TwitterController {
 
         twitterHandler.setWebhook(edit.getWebhook());
 
-        return getGlobalValues(twitterHandler.getGlobal());
+//        return getGlobalValues(twitterHandler.getGlobal());
+        return new GlobalValues();
     }
 
     private GlobalValues getGlobalValues(Global global) {

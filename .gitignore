@@ -6,3 +6,4 @@ twitter4j.properties
 application.yml
 springboot.jks
 springboot.p12
+database.properties

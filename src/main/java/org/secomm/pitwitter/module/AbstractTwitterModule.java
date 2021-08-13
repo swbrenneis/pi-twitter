@@ -1,18 +1,14 @@
 package org.secomm.pitwitter.module;
 
 import org.secomm.pitwitter.discord.DiscordNotifier;
-import org.secomm.pitwitter.handlers.DatabaseHandler;
+import org.secomm.pitwitter.database.GlobalDatabaseHandler;
 import twitter4j.Status;
 
 public abstract class AbstractTwitterModule implements TwitterModule {
 
-    protected final DatabaseHandler databaseHandler;
-
     protected final RateLimiter rateLimiter;
 
-    protected AbstractTwitterModule(final DatabaseHandler databaseHandler,
-                                    final RateLimiter rateLimiter) {
-        this.databaseHandler = databaseHandler;
+    protected AbstractTwitterModule(final RateLimiter rateLimiter) {
         this.rateLimiter = rateLimiter;
     }
 

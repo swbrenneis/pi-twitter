@@ -1,40 +1,51 @@
 package org.secomm.pitwitter.loaders;
 
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import io.jsondb.JsonDBTemplate;
 import org.bson.Document;
 import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.UserContext;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
+@PropertySource("classpath:database.properties")
 public class GlobalDatabaseLoader {
 
-    public void loadDatabase(Global global) {
+    @Value("${db.mongodbUrl}")
+    private String mongodbUrl;
+
+    @Value("${db.filesLocation}")
+    private String dbFilesLocation;
+
+    @Value("${db.baseScanPackage}")
+    private String dbBaseScanPackage;
+
+    public void loadDatabase(MongoCollection<Document> globalCollection) {
 
         try {
-            MongoClientURI uri =
-                    new MongoClientURI("mongodb://8v8b7NVZR5MI9pom:kH7DmbPzMwgiM4h7@estaqueesta.net/?authSource=admin");
-            MongoClient mongoClient = new MongoClient(uri);
-            MongoDatabase mongoDatabase = mongoClient.getDatabase("twitter");
+            JsonDBTemplate jsonDBTemplate = new JsonDBTemplate(dbFilesLocation, dbBaseScanPackage, null);
+            Global global = jsonDBTemplate.findById("000001", Global.class);
 
-            MongoCollection<Document> globalCollection = mongoDatabase.getCollection("global");
-            Document webhook = new Document("webhook", global.getWebhook());
-            globalCollection.insertOne(webhook);
-            Document terms = new Document("terms", global.getTerms());
-            globalCollection.insertOne(terms);
-            List<Document> users = new ArrayList<>();
+            Document webhookItem = new Document("item", "webhook")
+                    .append("webhook", global.getWebhook());
+            globalCollection.insertOne(webhookItem);
+            Document termsItem = new Document("item", "terms")
+                    .append("terms", global.getTerms());
+            globalCollection.insertOne(termsItem);
+            Document usersItem = new Document("item", "users");
+            List<Document> userList = new ArrayList<>();
             for (UserContext userContext : global.getUsers()) {
-                Document userDocument = new Document("name", userContext.getName())
+                Document document = new Document("name", userContext.getName())
                         .append("lastId", userContext.getLastId());
-                users.add(userDocument);
+                userList.add(document);
             }
-            Document userDocument = new Document("users", users);
-            globalCollection.insertOne(userDocument);
-            mongoClient.close();
+            usersItem.append("users", userList);
+            globalCollection.insertOne(usersItem);
         } catch (Exception e) {
             e.printStackTrace();
         }

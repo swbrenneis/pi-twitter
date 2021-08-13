@@ -1,7 +1,7 @@
 package org.secomm.pitwitter.module;
 
 import org.secomm.pitwitter.config.FollowContext;
-import org.secomm.pitwitter.handlers.DatabaseHandler;
+import org.secomm.pitwitter.database.GlobalDatabaseHandler;
 import org.secomm.pitwitter.handlers.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +24,8 @@ public class FollowModule extends AbstractTwitterModule {
 
     private List<FollowContext> following;
 
-    public FollowModule(DatabaseHandler databaseHandler, RateLimiter rateLimiter) {
-        super(databaseHandler, rateLimiter);
+    public FollowModule(GlobalDatabaseHandler globalDatabaseHandler, RateLimiter rateLimiter) {
+        super(rateLimiter);
     }
 
     public void initialize(String moduleName) {
@@ -36,6 +36,7 @@ public class FollowModule extends AbstractTwitterModule {
     public void receivedStatuses(List<Status> statuses) {
 
         boolean firstpass = true;
+/*
         for (Status status : statuses) {
             if (firstpass) {
                 String screenName = statuses.get(0).getUser().getScreenName();
@@ -57,6 +58,7 @@ public class FollowModule extends AbstractTwitterModule {
                 }
             }
         }
+*/
     }
 
     @Override
@@ -69,11 +71,13 @@ public class FollowModule extends AbstractTwitterModule {
 
         while (run) {
             try {
+/*
                 if (rateLimiter.twitterReady()) {
                     for (FollowContext followContext : databaseHandler.getFollowing(moduleName)) {
                         rateLimiter.getUserTimeline(followContext, this);
                     }
                 }
+*/
                 lock.lock();
                 try {
                     run = !condition.await(1, TimeUnit.MINUTES);
@@ -87,11 +91,13 @@ public class FollowModule extends AbstractTwitterModule {
     }
 
     private String getWebhook(String username) {
+/*
         for (FollowContext followContext : databaseHandler.getFollowing(moduleName)) {
             if (followContext.getUsername().equals(username)) {
                 return followContext.getWebhook();
             }
         }
+*/
         return null;
     }
 

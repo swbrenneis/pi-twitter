@@ -1,7 +1,6 @@
 package org.secomm.pitwitter.module;
 
-import org.secomm.pitwitter.config.UserContext;
-import org.secomm.pitwitter.handlers.DatabaseHandler;
+import org.secomm.pitwitter.database.GlobalDatabaseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -30,8 +29,8 @@ public class RestockModule extends AbstractTwitterModule {
     private SimpleDateFormat dateFormat;
 
     public RestockModule(final RateLimiter rateLimiter,
-                         final DatabaseHandler databaseHandler) {
-        super(databaseHandler, rateLimiter);
+                         final GlobalDatabaseHandler globalDatabaseHandler) {
+        super(rateLimiter);
         dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
     }
 
@@ -39,13 +38,14 @@ public class RestockModule extends AbstractTwitterModule {
 
 //        restockWebhook = DEV_WEBHOOK;
 //        giveawayWebhook = DEV_WEBHOOK;
-        restockWebhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.RESTOCKS);
-        giveawayWebhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.GIVEAWAY);
+//        restockWebhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.RESTOCKS);
+//        giveawayWebhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.GIVEAWAY);
     }
 
     @Override
     public void receivedStatuses(List<Status> statuses) {
 
+/*
         boolean firstpass = true;
         for (Status status : statuses) {
             if (firstpass) {
@@ -81,6 +81,7 @@ public class RestockModule extends AbstractTwitterModule {
                 }
             }
         }
+*/
     }
 
     @Override
@@ -92,11 +93,13 @@ public class RestockModule extends AbstractTwitterModule {
 
         while (run) {
             try {
+/*
                 if (rateLimiter.twitterReady()) {
                     for (UserContext userContext : databaseHandler.getUsers(DatabaseHandler.DatabaseSelector.RESTOCKS)) {
                         rateLimiter.getUserTimeline(userContext, this);
                     }
                 }
+*/
                 lock.lock();
                 try {
                     condition.await(1, TimeUnit.MINUTES);

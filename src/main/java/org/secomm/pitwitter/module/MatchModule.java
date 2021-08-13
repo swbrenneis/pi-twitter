@@ -1,8 +1,7 @@
 package org.secomm.pitwitter.module;
 
-import org.secomm.pitwitter.config.Global;
 import org.secomm.pitwitter.config.UserContext;
-import org.secomm.pitwitter.handlers.DatabaseHandler;
+import org.secomm.pitwitter.database.GlobalDatabaseHandler;
 import org.secomm.pitwitter.handlers.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,23 +26,23 @@ public class MatchModule extends AbstractTwitterModule {
 
     public enum Operation { ADD, DELETE }
 
-    private String webhook;
+    private final GlobalDatabaseHandler globalDatabaseHandler;
 
-    private final SimpleDateFormat dateFormat;
+    private String webhook;
 
     private final TwitterConnector twitterConnector;
 
-    public MatchModule(final DatabaseHandler databaseHandler,
+    public MatchModule(final GlobalDatabaseHandler globalDatabaseHandler,
                        final RateLimiter rateLimiter,
                        final TwitterConnector twitterConnector) {
-        super(databaseHandler, rateLimiter);
+        super(rateLimiter);
+        this.globalDatabaseHandler = globalDatabaseHandler;
         this.twitterConnector = twitterConnector;
-        dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
     }
 
     public void initialize() throws TwitterException {
 
-        webhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.GLOBAL);
+        webhook = globalDatabaseHandler.getWebhook();
 //        webhook = DEV_WEBHOOK;
     }
 
@@ -57,15 +56,14 @@ public class MatchModule extends AbstractTwitterModule {
                 log.info("{} statuses received for {}", statuses.size(), screenName);
                 firstpass = false;
             }
-            long lastId = databaseHandler.getLastId(status.getUser().getScreenName(),
-                    DatabaseHandler.DatabaseSelector.GLOBAL);
+            long lastId = globalDatabaseHandler.getLastId(status.getUser().getScreenName());
             if (status.getId() > lastId) {
-                databaseHandler.updateLastId(status.getUser().getScreenName(), status.getId(),
-                        DatabaseHandler.DatabaseSelector.GLOBAL);
+                globalDatabaseHandler.updateLastId(status.getUser().getScreenName(), status.getId());
             }
             String tweet = status.getText();
             boolean notificationSent = false;
-            for (String term : databaseHandler.getTerms(DatabaseHandler.DatabaseSelector.GLOBAL)) {
+            List<String> terms = globalDatabaseHandler.getTerms();
+            for (String term : terms) {
                 if (!notificationSent && tweet.toUpperCase().contains(term.toUpperCase())) {
                     log.info("{} matched {}", status.getUser().getScreenName(), term);
                     sendNotification(webhook, status);
@@ -88,7 +86,7 @@ public class MatchModule extends AbstractTwitterModule {
                         log.warn("User {} timeline is private", userName);
                         return "User timeline is private";
                     } else {
-                        databaseHandler.addUser(userName);
+                        globalDatabaseHandler.addUser(userName);
                         return "User added";
                     }
                 } catch (TwitterException e) {
@@ -96,7 +94,7 @@ public class MatchModule extends AbstractTwitterModule {
                 }
                 break;
             case DELETE:
-                databaseHandler.deleteUser(userName);
+                globalDatabaseHandler.deleteUser(userName);
                 return "User deleted";
         }
         return "Invalid operation";
@@ -107,10 +105,10 @@ public class MatchModule extends AbstractTwitterModule {
         for (String term : terms) {
             switch (operation) {
                 case ADD:
-                    databaseHandler.addTerm(term);
+                    globalDatabaseHandler.addTerm(term);
                     break;
                 case DELETE:
-                    databaseHandler.deleteTerm(term);
+                    globalDatabaseHandler.deleteTerm(term);
             }
         }
         return "Success";
@@ -118,7 +116,7 @@ public class MatchModule extends AbstractTwitterModule {
 
     public void setWebhook(String webhook) {
         this.webhook = webhook;
-        databaseHandler.setWebhook(webhook);
+        globalDatabaseHandler.setWebhook(webhook);
     }
 
     @Override
@@ -131,8 +129,9 @@ public class MatchModule extends AbstractTwitterModule {
 
         while (run) {
             try {
+                List<UserContext> userList = globalDatabaseHandler.getUsers();
                 if (rateLimiter.twitterReady()) {
-                    for (UserContext userContext : databaseHandler.getUsers(DatabaseHandler.DatabaseSelector.GLOBAL)) {
+                    for (UserContext userContext : userList) {
                         rateLimiter.getUserTimeline(userContext, this);
                     }
                 }
@@ -143,12 +142,15 @@ public class MatchModule extends AbstractTwitterModule {
                     lock.unlock();
                 }
             } catch (Exception e) {
-                log.error("Configuration error: {}", e.getLocalizedMessage());
+                log.error("{} caught while queueing user timelines: {}", e.getClass().getSimpleName(),
+                        e.getLocalizedMessage());
             }
         }
     }
 
+/*
     public Global getGlobal() {
         return databaseHandler.getGlobal();
     }
+*/
 }

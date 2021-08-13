@@ -1,6 +1,7 @@
 package org.secomm.pitwitter;
 
-import org.secomm.pitwitter.handlers.DatabaseHandler;
+import org.secomm.pitwitter.database.GlobalDatabaseHandler;
+import org.secomm.pitwitter.database.MongoDbConnector;
 import org.secomm.pitwitter.module.FollowModule;
 import org.secomm.pitwitter.module.MatchModule;
 import org.secomm.pitwitter.module.MentionsModule;
@@ -27,7 +28,10 @@ public class PiTwitter implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(PiTwitter.class);
 
     @Autowired
-    private DatabaseHandler databaseHandler;
+    private MongoDbConnector mongoDbConnector;
+
+    @Autowired
+    private GlobalDatabaseHandler globalDatabaseHandler;
 
     @Autowired
     private MatchModule matchHandler;
@@ -63,17 +67,19 @@ public class PiTwitter implements CommandLineRunner {
         condition = lock.newCondition();
 
         try {
-            databaseHandler.initialize();
+            mongoDbConnector.initialize();
+            globalDatabaseHandler.initialize();
             twitterConnector.initialize();
             matchHandler.initialize();
             mentionsHandler.initialize();
-            restockHandler.initialize();
-            bncModule.initialize("botncop");
+//            restockHandler.initialize();
+//            bncModule.initialize("botncop");
 
-//            executor.submit(matchHandler);
+            executor.submit(matchHandler);
 //            executor.submit(restockHandler);
-//            executor.submit(rateLimiter);
-            executor.submit(bncModule);
+            executor.submit(rateLimiter);
+//            List<UserContext> users = databaseHandler.getUsers(DatabaseHandler.DatabaseSelector.GLOBAL);
+//            executor.submit(bncModule);
 
             try {
                 while (true) {
