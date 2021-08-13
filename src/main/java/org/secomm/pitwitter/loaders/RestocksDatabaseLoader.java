@@ -1,8 +1,10 @@
 package org.secomm.pitwitter.loaders;
 
-import io.jsondb.JsonDBTemplate;
+import com.mongodb.client.MongoCollection;
+import org.bson.Document;
 import org.secomm.pitwitter.config.Restocks;
 import org.secomm.pitwitter.config.UserContext;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -10,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+@Component
 public class RestocksDatabaseLoader {
 
     private static final String RESTOCK_WEBHOOK = "https://discord.com/api/webhooks/871412406386053131/wxte26UjP7xSWFnmGoYpqGD6_ot3Fm7Bi6MQXTi-DaRkyTZ62g9jEctuiBj4-YOtGz4u";
@@ -29,7 +32,7 @@ public class RestocksDatabaseLoader {
             "monthlies"
     };
 
-    public void loadDatabase(JsonDBTemplate jsonDBTemplate) {
+    public void loadDatabase(MongoCollection<Document> restocksCollection) {
 
         try {
 
@@ -48,8 +51,6 @@ public class RestocksDatabaseLoader {
             restocks.getTerms().addAll(Arrays.asList(TERMS));
             restocks.setRestockWebhook(RESTOCK_WEBHOOK);
             restocks.setGiveawayWebhook(GIVEAWAY_WEBHOOK);
-            jsonDBTemplate.createCollection(Restocks.class);
-            jsonDBTemplate.upsert(restocks);
         } catch (IOException e) {
             e.printStackTrace();
         }

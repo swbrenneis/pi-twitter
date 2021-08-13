@@ -1,6 +1,7 @@
 package org.secomm.pitwitter.module;
 
 import org.secomm.pitwitter.database.GlobalDatabaseHandler;
+import org.secomm.pitwitter.database.RestockDatabaseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -22,24 +23,27 @@ public class RestockModule extends AbstractTwitterModule {
 
     private static final int PAGE_SIZE = 25;
 
-    private String restockWebhook;
+    private final RestockDatabaseHandler restockDatabaseHandler;
 
-    private String giveawayWebhook;
+    private String restocksWebhook;
+
+    private String giveawaysWebhook;
 
     private SimpleDateFormat dateFormat;
 
     public RestockModule(final RateLimiter rateLimiter,
-                         final GlobalDatabaseHandler globalDatabaseHandler) {
+                         final RestockDatabaseHandler restockDatabaseHandler) {
         super(rateLimiter);
+        this.restockDatabaseHandler = restockDatabaseHandler;
         dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
     }
 
     public void initialize() throws Exception {
 
-//        restockWebhook = DEV_WEBHOOK;
-//        giveawayWebhook = DEV_WEBHOOK;
-//        restockWebhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.RESTOCKS);
-//        giveawayWebhook = databaseHandler.getWebhook(DatabaseHandler.DatabaseSelector.GIVEAWAY);
+//        restocksWebhook = DEV_WEBHOOK;
+//        giveawaysWebhook = DEV_WEBHOOK;
+        restocksWebhook = restockDatabaseHandler.getRestocksWebhook();
+        giveawaysWebhook = restockDatabaseHandler.getGiveawaysWebhook();
     }
 
     @Override
