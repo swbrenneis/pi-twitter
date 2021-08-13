@@ -1,4 +1,4 @@
-package org.secomm.pitwitter.handlers;
+package org.secomm.pitwitter.connectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

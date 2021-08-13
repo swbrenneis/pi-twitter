@@ -1,4 +1,4 @@
-package org.secomm.pitwitter.database;
+package org.secomm.pitwitter.connectors;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
@@ -22,15 +22,22 @@ public class MongoDbConnector {
 
     private MongoCollection<Document> globalCollection;
 
+    private MongoCollection<Document> restocksCollection;
+
     public void initialize() {
 
         MongoClientURI uri = new MongoClientURI(mongodbUrl);
         mongoClient = new MongoClient(uri);
         mongoDatabase = mongoClient.getDatabase("twitter");
         globalCollection = mongoDatabase.getCollection("global");
+        restocksCollection = mongoDatabase.getCollection("restock");
     }
 
     public MongoCollection<Document> getGlobalCollection() {
         return globalCollection;
+    }
+
+    public MongoCollection<Document> getRestocksCollection() {
+        return restocksCollection;
     }
 }
