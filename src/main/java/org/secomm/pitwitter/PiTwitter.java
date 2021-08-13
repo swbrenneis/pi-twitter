@@ -1,13 +1,12 @@
 package org.secomm.pitwitter;
 
-import org.secomm.pitwitter.database.GlobalDatabaseHandler;
-import org.secomm.pitwitter.database.MongoDbConnector;
+import org.secomm.pitwitter.connectors.MongoDbConnector;
 import org.secomm.pitwitter.module.FollowModule;
 import org.secomm.pitwitter.module.MatchModule;
 import org.secomm.pitwitter.module.MentionsModule;
 import org.secomm.pitwitter.module.RateLimiter;
 import org.secomm.pitwitter.module.RestockModule;
-import org.secomm.pitwitter.handlers.TwitterConnector;
+import org.secomm.pitwitter.connectors.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +30,10 @@ public class PiTwitter implements CommandLineRunner {
     private MongoDbConnector mongoDbConnector;
 
     @Autowired
-    private GlobalDatabaseHandler globalDatabaseHandler;
+    private MatchModule matchModule;
 
     @Autowired
-    private MatchModule matchHandler;
-
-    @Autowired
-    private MentionsModule mentionsHandler;
+    private MentionsModule mentionsModule;
 
     @Autowired
     private RestockModule restockHandler;
@@ -68,14 +64,13 @@ public class PiTwitter implements CommandLineRunner {
 
         try {
             mongoDbConnector.initialize();
-            globalDatabaseHandler.initialize();
             twitterConnector.initialize();
-            matchHandler.initialize();
-            mentionsHandler.initialize();
+            matchModule.initialize();
+            mentionsModule.initialize();
 //            restockHandler.initialize();
 //            bncModule.initialize("botncop");
 
-            executor.submit(matchHandler);
+            executor.submit(matchModule);
 //            executor.submit(restockHandler);
             executor.submit(rateLimiter);
 //            List<UserContext> users = databaseHandler.getUsers(DatabaseHandler.DatabaseSelector.GLOBAL);
