@@ -1,6 +1,6 @@
 package org.secomm.pitwitter.module;
 
-import org.secomm.pitwitter.handlers.TwitterConnector;
+import org.secomm.pitwitter.connectors.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
