@@ -31,21 +31,15 @@ public class GlobalDatabaseLoader {
             JsonDBTemplate jsonDBTemplate = new JsonDBTemplate(dbFilesLocation, dbBaseScanPackage, null);
             Global global = jsonDBTemplate.findById("000001", Global.class);
 
-            Document webhookItem = new Document("item", "webhook")
-                    .append("webhook", global.getWebhook());
-            globalCollection.insertOne(webhookItem);
-            Document termsItem = new Document("item", "terms")
-                    .append("terms", global.getTerms());
-            globalCollection.insertOne(termsItem);
-            Document usersItem = new Document("item", "users");
+            globalCollection.insertOne(new Document("webhook", global.getWebhook()));
+            globalCollection.insertOne(new Document("terms", global.getTerms()));
             List<Document> userList = new ArrayList<>();
             for (UserContext userContext : global.getUsers()) {
                 Document document = new Document("name", userContext.getName())
                         .append("lastId", userContext.getLastId());
                 userList.add(document);
             }
-            usersItem.append("users", userList);
-            globalCollection.insertOne(usersItem);
+            globalCollection.insertMany(userList);
         } catch (Exception e) {
             e.printStackTrace();
         }

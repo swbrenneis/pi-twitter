@@ -2,22 +2,33 @@ package org.secomm.pitwitter.database;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.secomm.pitwitter.config.UserContext;
+import org.secomm.pitwitter.connectors.MongoDbConnector;
 import org.secomm.pitwitter.loaders.GlobalDatabaseLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @PropertySource("classpath:database.properties")
 public class GlobalDatabaseHandler {
 
-//    @Autowired
-//    private GlobalDatabaseLoader globalDatabaseLoader;
+    private final Logger log = LoggerFactory.getLogger(GlobalDatabaseHandler.class);
+
+    @Autowired
+    private GlobalDatabaseLoader globalDatabaseLoader;
 
     private final MongoDbConnector mongoDbConnector;
 
@@ -35,11 +46,10 @@ public class GlobalDatabaseHandler {
 
     public String getWebhook() {
 
-        Document query = new Document("item", "webhook");
-        MongoIterable<Document> cursor = globalCollection.find(query);
-        if (cursor.iterator().hasNext()) {
-            Document webhook = cursor.iterator().next();
-            return webhook.getString("webhook");
+        Bson query = Filters.exists("webhook");
+        Document webhookDocument = globalCollection.find(query).first();
+        if (webhookDocument != null) {
+            return webhookDocument.getString("webhook");
         } else {
             return "";
         }
@@ -47,18 +57,18 @@ public class GlobalDatabaseHandler {
 
     public void setWebhook(String webhook) {
 
-        Document query = new Document("item", "webhook");
-        MongoIterable<Document> cursor = globalCollection.find(query);
-        if (cursor.iterator().hasNext()) {
-            Document webhookDocument = cursor.iterator().next();
-            webhookDocument.put("webhook", webhook);
-            globalCollection.updateOne(query, webhookDocument);
+        Bson query = Filters.exists("webhook");
+        Bson updateOperation = Updates.set("webhook", webhook);
+        UpdateResult updateResult = globalCollection.updateOne(query, updateOperation);
+        if (updateResult.getModifiedCount() == 0) {
+            log.warn("Webhook was not updated");
         }
     }
 
-    public long getLastId(String user) {
+    public long getLastId(String username) {
 
-        Document userDocument = getUserDocument(user);
+        Bson query = Filters.eq("name", String.format("@%s", username));
+        Document userDocument = globalCollection.find(query).first();
         if (userDocument != null) {
             return userDocument.getLong("lastId");
         } else {
@@ -66,126 +76,67 @@ public class GlobalDatabaseHandler {
         }
     }
 
-    public void updateLastId(String name, long lastId) {
+    public void updateLastId(String username, long lastId) {
 
-        String handle = "@" + name;
-        Document query = new Document("item", "users");
-        MongoIterable<Document> cursor = globalCollection.find(query);
-        if (cursor.iterator().hasNext()) {
-            Document usersDocument = cursor.iterator().next();
-            List<Document> userList = usersDocument.getList("users", Document.class);
-            for (Document document : userList) {
-                if (document.getString("name").equals(handle)) {
-                    document.put("lastId", lastId);
-                }
-            }
-            globalCollection.updateOne(query, usersDocument);
+        Bson query = Filters.eq("name", String.format("@%s", username));
+        Bson updateOperation = Updates.set("lastId", lastId);
+        UpdateResult updateResult = globalCollection.updateOne(query, updateOperation);
+        if (updateResult.getModifiedCount() == 0) {
+            log.warn("{} lastId was not updated", username);
         }
     }
 
     public List<UserContext> getUsers() {
 
-        Document query = new Document("item", "users");
-        MongoIterable<Document> cursor = globalCollection.find(query);
-        List<UserContext> userContexts = new ArrayList<>();
-        if (cursor.iterator().hasNext()) {
-            Document usersDocument = cursor.iterator().next();
-            List<Document> userList = usersDocument.getList("users", Document.class);
-            for (Document document : userList) {
-                userContexts.add(new UserContext(document.getString("name"), document.getLong("lastId")));
-            }
-        }
-        return userContexts;
-    }
-
-    private Document getUserDocument(String name) {
-
-        String handle = "@" + name;
-        Document query = new Document("item", "users");
-        MongoIterable<Document> cursor = globalCollection.find(query);
-        if (cursor.iterator().hasNext()) {
-            List<Document> userList = cursor.iterator().next().getList("users", Document.class);
-            for (Document document : userList) {
-                if (document.getString("name").equals(handle)) {
-                    return document;
-                }
-            }
-        }
-        return null;
+        Bson query = Filters.regex("name", "@\\w+");
+        List<Document> userList = globalCollection.find(query).into(new ArrayList<>());
+        return userList.stream()
+                .map(document -> new UserContext(document.getString("name"), document.getLong("lastId")))
+                .collect(Collectors.toList());
     }
 
     public List<String> getTerms() {
-
-        Document query = new Document("item", "terms");
-        MongoIterable<Document> cursor = globalCollection.find(query);
-        if (cursor.iterator().hasNext()) {
-            Document termsDocument = cursor.iterator().next();
-            return termsDocument.getList("terms", String.class);
-        }
-        return new ArrayList<>();
+        Bson query = Filters.exists("terms");
+        return globalCollection.find(query).first().getList("terms", String.class);
     }
 
-    public void addUser(String name) {
-
-        Document query = new Document("item", "users");
-        MongoIterable<Document> cursor = globalCollection.find(query);
-        if (cursor.iterator().hasNext()) {
-            Document usersDocument = cursor.iterator().next();
-            List<Document> usersList = usersDocument.getList("users", Document.class);
-            Document newUser = new Document("name", name)
-                    .append("lastId", 0L);
-            usersList.add(newUser);
-            usersDocument.put("users", usersList);
-            globalCollection.updateOne(query, usersDocument);
-        }
+    public void addUser(String username) {
+        globalCollection.insertOne(new Document("name", username).append("lastId", 0));
     }
 
-    public void deleteUser(String name) {
-
-        Document query = new Document("item", "users");
-        MongoIterable<Document> cursor = globalCollection.find(query);
-        if (cursor.iterator().hasNext()) {
-            Document usersDocument = cursor.iterator().next();
-            List<Document> usersList = usersDocument.getList("users", Document.class);
-            List<Document> updated = new ArrayList<>();
-            for (Document document : usersList) {
-                if (!document.getString("name").equals(name)) {
-                    updated.add(document);
-                }
-            }
-            usersDocument.put("users", updated);
-            globalCollection.updateOne(query, usersDocument);
+    public void deleteUser(String username) {
+        Bson query = Filters.eq("name", username);
+        DeleteResult deleteResult = globalCollection.deleteOne(query);
+        if (deleteResult.getDeletedCount() == 0) {
+            log.warn("User {} was not deleted", username);
         }
     }
 
     public void addTerm(String term) {
 
-        Document query = new Document("item", "terms");
-        MongoIterable<Document> cursor = globalCollection.find(query);
-        if (cursor.iterator().hasNext()) {
-            Document termsDocument = cursor.iterator().next();
-            List<String> terms = termsDocument.getList("terms", String.class);
-            terms.add(term);
-            termsDocument.put("terms", terms);
-            globalCollection.updateOne(query, termsDocument);
+        Bson query = Filters.exists("terms");
+        List<String> terms = getTerms();
+        Bson updateOperation = Updates.set("terms", terms);
+        UpdateResult updateResult = globalCollection.updateOne(query, updateOperation);
+        if (updateResult.getModifiedCount() == 0) {
+            log.warn("{} was not added to terms", term);
         }
     }
 
     public void deleteTerm(String term) {
 
-        Document query = new Document("item", "terms");
-        MongoIterable<Document> cursor = globalCollection.find(query);
-        if (cursor.iterator().hasNext()) {
-            Document termsDocument = cursor.iterator().next();
-            List<String> updated = new ArrayList<>();
-            List<String> terms = termsDocument.getList("terms", String.class);
-            for (String test : terms) {
-                if (!test.equals(term)) {
-                    updated.add(test);
-                }
+        List<String> terms = getTerms();
+        List<String> updated = new ArrayList<>();
+        for (String test : terms) {
+            if (!test.equals(term)) {
+                updated.add(test);
             }
-            termsDocument.put("terms", updated);
-            globalCollection.updateOne(query, termsDocument);
+        }
+        Bson filter = Filters.exists("terms");
+        Bson updateOperation = Updates.set("terms", terms);
+        UpdateResult updateResult = globalCollection.updateOne(filter, updateOperation);
+        if (updateResult.getModifiedCount() == 0) {
+            log.warn("{} was not deleted from terms", term);
         }
     }
 }

@@ -2,7 +2,7 @@ package org.secomm.pitwitter.module;
 
 import org.secomm.pitwitter.config.UserContext;
 import org.secomm.pitwitter.database.GlobalDatabaseHandler;
-import org.secomm.pitwitter.handlers.TwitterConnector;
+import org.secomm.pitwitter.connectors.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -42,6 +42,7 @@ public class MatchModule extends AbstractTwitterModule {
 
     public void initialize() throws TwitterException {
 
+        globalDatabaseHandler.initialize();
         webhook = globalDatabaseHandler.getWebhook();
 //        webhook = DEV_WEBHOOK;
     }
