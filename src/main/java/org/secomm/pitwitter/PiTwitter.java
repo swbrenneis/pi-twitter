@@ -1,11 +1,12 @@
 package org.secomm.pitwitter;
 
 import org.secomm.pitwitter.connectors.MongoDbConnector;
+import org.secomm.pitwitter.module.CategoriesModule;
 import org.secomm.pitwitter.module.FollowModule;
 import org.secomm.pitwitter.module.MatchModule;
 import org.secomm.pitwitter.module.MentionsModule;
 import org.secomm.pitwitter.module.RateLimiter;
-import org.secomm.pitwitter.module.RestockModule;
+import org.secomm.pitwitter.module.RestocksModule;
 import org.secomm.pitwitter.connectors.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,10 @@ public class PiTwitter implements CommandLineRunner {
     private MentionsModule mentionsModule;
 
     @Autowired
-    private RestockModule restockHandler;
+    private RestocksModule restocksModule;
+
+    @Autowired
+    private CategoriesModule categoriesModule;
 
     @Autowired
     private FollowModule bncModule;
@@ -67,13 +71,14 @@ public class PiTwitter implements CommandLineRunner {
             twitterConnector.initialize();
             matchModule.initialize();
             mentionsModule.initialize();
-//            restockHandler.initialize();
+            restocksModule.initialize();
+            categoriesModule.initialize();
 //            bncModule.initialize("botncop");
 
-            executor.submit(matchModule);
-//            executor.submit(restockHandler);
             executor.submit(rateLimiter);
-//            List<UserContext> users = databaseHandler.getUsers(DatabaseHandler.DatabaseSelector.GLOBAL);
+            executor.submit(matchModule);
+            executor.submit(restocksModule);
+            executor.submit(categoriesModule);
 //            executor.submit(bncModule);
 
             try {

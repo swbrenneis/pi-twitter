@@ -1,26 +1,17 @@
 package org.secomm.pitwitter.module;
 
-import org.secomm.pitwitter.config.UserContext;
-import org.secomm.pitwitter.database.GlobalDatabaseHandler;
+import org.secomm.pitwitter.model.UserContext;
 import org.secomm.pitwitter.connectors.TwitterConnector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.secomm.pitwitter.database.GlobalDatabaseHandler;
 import org.springframework.stereotype.Component;
 import twitter4j.Status;
 import twitter4j.TwitterException;
 import twitter4j.User;
 
-import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class MatchModule extends AbstractTwitterModule {
-
-    private static final Logger log = LoggerFactory.getLogger(MatchModule.class);
 
     private static final String DEV_WEBHOOK = "https://discordapp.com/api/webhooks/865325874077499433/J-2fsnn1gZCkYoebA7uq12ZFqvWixwIgfnKv2-y0y0MYHI0CWAFxOKcN9cCFUPF9gnh1";
 
@@ -48,7 +39,7 @@ public class MatchModule extends AbstractTwitterModule {
     }
 
     @Override
-    public void receivedStatuses(List<Status> statuses) {
+    public void receivedStatuses(List<Status> statuses, UserContext userContext) {
 
         boolean firstpass = true;
         for (Status status : statuses) {
@@ -57,9 +48,9 @@ public class MatchModule extends AbstractTwitterModule {
                 log.info("{} statuses received for {}", statuses.size(), screenName);
                 firstpass = false;
             }
-            long lastId = globalDatabaseHandler.getLastId(status.getUser().getScreenName());
+            long lastId = globalDatabaseHandler.getLastId(userContext.getName());
             if (status.getId() > lastId) {
-                globalDatabaseHandler.updateLastId(status.getUser().getScreenName(), status.getId());
+                globalDatabaseHandler.updateLastId(userContext.getName(), status.getId());
             }
             String tweet = status.getText();
             boolean notificationSent = false;
@@ -121,37 +112,7 @@ public class MatchModule extends AbstractTwitterModule {
     }
 
     @Override
-    public void run() {
-
-        Lock lock = new ReentrantLock();
-        Condition condition = lock.newCondition();
-        boolean run = true;
-        SimpleDateFormat dateFormat = new SimpleDateFormat(TwitterConnector.DATE_FORMAT);
-
-        while (run) {
-            try {
-                List<UserContext> userList = globalDatabaseHandler.getUsers();
-                if (rateLimiter.twitterReady()) {
-                    for (UserContext userContext : userList) {
-                        rateLimiter.getUserTimeline(userContext, this);
-                    }
-                }
-                lock.lock();
-                try {
-                    run = !condition.await(1, TimeUnit.MINUTES);
-                } finally {
-                    lock.unlock();
-                }
-            } catch (Exception e) {
-                log.error("{} caught while queueing user timelines: {}", e.getClass().getSimpleName(),
-                        e.getLocalizedMessage());
-            }
-        }
+    protected List<UserContext> getUsers() {
+        return globalDatabaseHandler.getUsers();
     }
-
-/*
-    public Global getGlobal() {
-        return databaseHandler.getGlobal();
-    }
-*/
 }

@@ -6,27 +6,32 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.secomm.pitwitter.model.UserContext;
 import org.secomm.pitwitter.connectors.MongoDbConnector;
-import org.secomm.pitwitter.loaders.RestocksDatabaseLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
-public class RestockDatabaseHandler {
+public class RestocksDatabaseHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(RestockDatabaseHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(RestocksDatabaseHandler.class);
 
-    @Autowired
-    private RestocksDatabaseLoader restocksDatabaseLoader;
+    private MongoDbConnector mongoDbConnector;
 
     private MongoCollection<Document> restocksCollection;
 
-    public void initialize(MongoDbConnector mongoDbConnector) {
+    public RestocksDatabaseHandler(final MongoDbConnector mongoDbConnector) {
+        this.mongoDbConnector = mongoDbConnector;
+    }
+
+    public void initialize() {
 
         restocksCollection = mongoDbConnector.getRestocksCollection();
-        restocksDatabaseLoader.loadDatabase(restocksCollection);
     }
 
     public String getRestocksWebhook() {
@@ -70,5 +75,45 @@ public class RestockDatabaseHandler {
             log.warn("GiveawaysWebhook was not updated");
         }
     }
-    
+
+    public long getLastId(String username) {
+
+        Bson query = Filters.eq("name", username);
+        Document userDocument = restocksCollection.find(query).first();
+        if (userDocument != null) {
+            return userDocument.getLong("lastId");
+        } else {
+            return -1;
+        }
+    }
+
+    public void updateLastId(String username, long lastId) {
+
+        Bson query = Filters.eq("name", username);
+        Bson updateOperation = Updates.set("lastId", lastId);
+        UpdateResult updateResult = restocksCollection.updateOne(query, updateOperation);
+        if (updateResult.getModifiedCount() == 0) {
+            log.warn("{} lastId was not updated", username);
+        }
+    }
+
+    public List<UserContext> getUsers() {
+
+        Bson query = Filters.regex("name", "@\\w+");
+        List<Document> userList = restocksCollection.find(query).into(new ArrayList<>());
+        return userList.stream()
+                .map(document -> new UserContext(document.getString("name"), document.getLong("lastId")))
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getTerms() {
+        Bson query = Filters.exists("terms");
+        return restocksCollection.find(query).first().getList("terms", String.class);
+    }
+
+    public List<String> getExclusions() {
+        Bson query = Filters.exists("exclusions");
+        return restocksCollection.find(query).first().getList("exclusions", String.class);
+    }
+
 }

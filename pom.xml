@@ -58,12 +58,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.jsondb</groupId>
-            <artifactId>jsondb-core</artifactId>
-            <version>${jsondb.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>

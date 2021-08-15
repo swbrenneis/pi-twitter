@@ -24,13 +24,16 @@ public class MongoDbConnector {
 
     private MongoCollection<Document> restocksCollection;
 
+    private MongoCollection<Document> categoriesCollection;
+
     public void initialize() {
 
         MongoClientURI uri = new MongoClientURI(mongodbUrl);
         mongoClient = new MongoClient(uri);
         mongoDatabase = mongoClient.getDatabase("twitter");
         globalCollection = mongoDatabase.getCollection("global");
-        restocksCollection = mongoDatabase.getCollection("restock");
+        restocksCollection = mongoDatabase.getCollection("restocks");
+        categoriesCollection = mongoDatabase.getCollection("categories");
     }
 
     public MongoCollection<Document> getGlobalCollection() {
@@ -39,5 +42,9 @@ public class MongoDbConnector {
 
     public MongoCollection<Document> getRestocksCollection() {
         return restocksCollection;
+    }
+
+    public MongoCollection<Document> getCategoriesCollection() {
+        return categoriesCollection;
     }
 }

@@ -1,15 +1,10 @@
-package org.secomm.pitwitter.config;
-
-import io.jsondb.annotation.Document;
-import io.jsondb.annotation.Id;
+package org.secomm.pitwitter.model;
 
 import java.util.List;
 
-@Document(collection = "global", schemaVersion = "1.0")
-public class Global {
+public class Category {
 
-    @Id
-    private String id;
+    private String category;
 
     private List<UserContext> users;
 
@@ -17,31 +12,30 @@ public class Global {
 
     private String webhook;
 
-    public Global() {
-        id = "000001";
+    public Category() {
     }
 
-    public Global(String id, List<UserContext> users, List<String> terms, String webhook) {
-        this.id = id;
+    public Category(String category, List<UserContext> users, List<String> terms, String webhook) {
+        this.category = category;
         this.users = users;
         this.terms = terms;
         this.webhook = webhook;
     }
 
-    public String getId() {
-        return id;
+    public String getCategory() {
+        return category;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public List<UserContext> getUsers() {
         return users;
     }
 
-    public void setUsers(List<UserContext> userContexts) {
-        this.users = userContexts;
+    public void setUsers(List<UserContext> users) {
+        this.users = users;
     }
 
     public List<String> getTerms() {
@@ -62,8 +56,8 @@ public class Global {
 
     @Override
     public String toString() {
-        return "Global{" +
-                "id='" + id + '\'' +
+        return "Category{" +
+                "categoryName='" + category + '\'' +
                 ", users=" + users +
                 ", terms=" + terms +
                 ", webhook='" + webhook + '\'' +

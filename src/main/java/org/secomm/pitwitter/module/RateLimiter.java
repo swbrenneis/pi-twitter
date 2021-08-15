@@ -1,9 +1,8 @@
 package org.secomm.pitwitter.module;
 
-import org.secomm.pitwitter.config.FollowContext;
-import org.secomm.pitwitter.config.UserContext;
-import org.secomm.pitwitter.discord.DiscordNotifier;
 import org.secomm.pitwitter.connectors.TwitterConnector;
+import org.secomm.pitwitter.discord.DiscordNotifier;
+import org.secomm.pitwitter.model.UserContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -64,22 +63,11 @@ public class RateLimiter implements Runnable {
         queueLock = new ReentrantLock();
     }
 
-    public void getUserTimeline(UserContext userContext, TwitterModule handler) {
+    public void queueTimelineRequest(UserContext userContext, TwitterModule handler) {
 
         queueLock.lock();
         try {
             requestQueue.addLast(new Request(userContext, handler));
-        } finally {
-            queueLock.unlock();
-        }
-    }
-
-    public void getUserTimeline(FollowContext followContext, TwitterModule handler) {
-
-        queueLock.lock();
-        try {
-            requestQueue.addLast(new Request(new UserContext(followContext.getUsername(), followContext.getLastId()),
-                    handler));
         } finally {
             queueLock.unlock();
         }
@@ -95,7 +83,7 @@ public class RateLimiter implements Runnable {
         }
     }
 
-    private List<Status> getUserTimeline(UserContext userContext) throws Exception {
+    private List<Status> queueTimelineRequest(UserContext userContext) throws Exception {
 
         log.debug("Getting {} statuses for user {}", PAGE_SIZE, userContext.getName());
         List<Status> statusList = twitterConnector.getUserTimeline(userContext.getName(), PAGE_SIZE, userContext.getLastId());
@@ -126,8 +114,8 @@ public class RateLimiter implements Runnable {
                 while (!bucket.isEmpty()) {
                     try {
                         Request request = bucket.pop();
-                        List<Status> statuses = getUserTimeline(request.userContext);
-                        request.handler.receivedStatuses(statuses);
+                        List<Status> statuses = queueTimelineRequest(request.userContext);
+                        request.handler.receivedStatuses(statuses, request.userContext);
                         Thread.sleep(1500);
                     } catch (Exception e) {
                         log.warn("{} caught while retrieving timelines: {}", e.getClass().getName(),

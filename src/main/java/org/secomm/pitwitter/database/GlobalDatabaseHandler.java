@@ -1,34 +1,27 @@
 package org.secomm.pitwitter.database;
 
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.secomm.pitwitter.config.UserContext;
+import org.secomm.pitwitter.model.UserContext;
 import org.secomm.pitwitter.connectors.MongoDbConnector;
-import org.secomm.pitwitter.loaders.GlobalDatabaseLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 @PropertySource("classpath:database.properties")
 public class GlobalDatabaseHandler {
 
     private final Logger log = LoggerFactory.getLogger(GlobalDatabaseHandler.class);
-
-    @Autowired
-    private GlobalDatabaseLoader globalDatabaseLoader;
 
     private final MongoDbConnector mongoDbConnector;
 
@@ -41,7 +34,6 @@ public class GlobalDatabaseHandler {
     public void initialize() {
 
         globalCollection = mongoDbConnector.getGlobalCollection();
-//        globalDatabaseLoader.loadDatabase(globalCollection);
     }
 
     public String getWebhook() {
@@ -67,7 +59,7 @@ public class GlobalDatabaseHandler {
 
     public long getLastId(String username) {
 
-        Bson query = Filters.eq("name", String.format("@%s", username));
+        Bson query = Filters.eq("name", username);
         Document userDocument = globalCollection.find(query).first();
         if (userDocument != null) {
             return userDocument.getLong("lastId");
@@ -78,7 +70,7 @@ public class GlobalDatabaseHandler {
 
     public void updateLastId(String username, long lastId) {
 
-        Bson query = Filters.eq("name", String.format("@%s", username));
+        Bson query = Filters.eq("name", username);
         Bson updateOperation = Updates.set("lastId", lastId);
         UpdateResult updateResult = globalCollection.updateOne(query, updateOperation);
         if (updateResult.getModifiedCount() == 0) {
@@ -133,7 +125,7 @@ public class GlobalDatabaseHandler {
             }
         }
         Bson filter = Filters.exists("terms");
-        Bson updateOperation = Updates.set("terms", terms);
+        Bson updateOperation = Updates.set("terms", updated);
         UpdateResult updateResult = globalCollection.updateOne(filter, updateOperation);
         if (updateResult.getModifiedCount() == 0) {
             log.warn("{} was not deleted from terms", term);

@@ -1,7 +1,5 @@
 package org.secomm.pitwitter.rest;
 
-import org.secomm.pitwitter.config.Global;
-import org.secomm.pitwitter.config.UserContext;
 import org.secomm.pitwitter.module.MatchModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +9,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @RequestMapping("twitter-config")
@@ -84,12 +79,4 @@ public class TwitterController {
         return new GlobalValues();
     }
 
-    private GlobalValues getGlobalValues(Global global) {
-
-        List<String> users = new ArrayList<>();
-        for (UserContext userContext : global.getUsers()) {
-            users.add(userContext.getName());
-        }
-        return new GlobalValues(users, global.getTerms(), global.getWebhook());
-    }
 }
