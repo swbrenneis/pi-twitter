@@ -9,7 +9,7 @@ import java.util.List;
 @Component
 public class FollowModule extends AbstractTwitterModule {
 
-    protected FollowModule(RateLimiter rateLimiter) {
+    protected FollowModule(final RateLimiter rateLimiter) {
         super(rateLimiter);
     }
 
