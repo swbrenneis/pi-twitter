@@ -1,10 +1,7 @@
 target/
-data/lock/
 logs/
 keys
-twitter4j.properties
-application.yml
-springboot.jks
-springboot.p12
-database.properties
+*.properties
+*.yml
+*.jks
 *.json
