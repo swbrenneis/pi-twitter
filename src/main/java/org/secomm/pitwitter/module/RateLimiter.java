@@ -1,7 +1,7 @@
 package org.secomm.pitwitter.module;
 
 import org.secomm.pitwitter.connectors.TwitterConnector;
-import org.secomm.pitwitter.discord.DiscordNotifier;
+import org.secomm.pitwitter.discord.DiscordAdapter;
 import org.secomm.pitwitter.model.UserContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import twitter4j.Status;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -45,22 +46,29 @@ public class RateLimiter implements Runnable {
 
     private final TwitterConnector twitterConnector;
 
-    private final DiscordNotifier discordNotifier;
+    private final DiscordAdapter discordAdapter;
 
     private final Deque<Request> requestQueue;
 
     private final Deque<WebHook> webhookQueue;
 
+    private final List<TwitterModule> modules;
+
     private final Lock queueLock;
 
     public RateLimiter(final TwitterConnector twitterConnector,
-                       final DiscordNotifier discordNotifier) {
+                       final DiscordAdapter discordAdapter) {
 
         this.twitterConnector = twitterConnector;
-        this.discordNotifier = discordNotifier;
+        this.discordAdapter = discordAdapter;
         requestQueue = new ArrayDeque<>();
         webhookQueue = new ArrayDeque<>();
         queueLock = new ReentrantLock();
+        modules = new ArrayList<>();
+    }
+
+    public void register(TwitterModule module) {
+        modules.add(module);
     }
 
     public void queueTimelineRequest(UserContext userContext, TwitterModule handler) {
@@ -89,10 +97,6 @@ public class RateLimiter implements Runnable {
         List<Status> statusList = twitterConnector.getUserTimeline(userContext.getName(), PAGE_SIZE, userContext.getLastId());
 
         return statusList;
-    }
-
-    public boolean twitterReady() {
-        return requestQueue.isEmpty();
     }
 
     @Override
@@ -126,15 +130,11 @@ public class RateLimiter implements Runnable {
                 queueLock.unlock();
             }
 
-            long now = System.currentTimeMillis() / 1000;
             try {
                 log.info("Discord notifications queue depth is {}", webhookQueue.size());
-                while (now > discordNotifier.getSendAfter() && !webhookQueue.isEmpty()) {
-                    WebHook webHook = webhookQueue.peek();
-                    if (discordNotifier.sendWebhook(webHook.webhook, webHook.url)) {
-                        webhookQueue.pop();
-                    }
-                    Thread.sleep(2000);
+                while (!webhookQueue.isEmpty()) {
+                    WebHook webHook = webhookQueue.pop();
+                    discordAdapter.sendWebhook(webHook.webhook, webHook.url);
                 }
             } catch (Exception e) {
                 log.warn("{} caught while sending webhooks: {}", e.getClass().getName(),
@@ -150,6 +150,10 @@ public class RateLimiter implements Runnable {
                     e.printStackTrace();
                 } finally {
                     lock.unlock();
+                }
+
+                for (TwitterModule module : modules) {
+                    module.ready();
                 }
             }
         }

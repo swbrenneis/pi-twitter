@@ -33,26 +33,49 @@ public class CategoriesModule extends AbstractTwitterModule {
 
         boolean firstpass = true;
         for (Status status : statuses) {
+            String category = userContext.getCategory();
             if (firstpass) {
                 String screenName = statuses.get(0).getUser().getScreenName();
                 log.info("{} statuses received for {}", statuses.size(), screenName);
                 firstpass = false;
             }
-            long lastId = categoriesDatabaseHandler.getLastId(userContext.getName(), userContext.getCategory());
+            long lastId = categoriesDatabaseHandler.getLastId(userContext.getName(), category);
             if (status.getId() > lastId) {
-                categoriesDatabaseHandler.updateLastId(userContext.getName(), userContext.getCategory(), status.getId());
+                categoriesDatabaseHandler.updateLastId(userContext.getName(), category, status.getId());
             }
             String tweet = status.getText();
             boolean notificationSent = false;
-            List<String> terms = categoriesDatabaseHandler.getTerms(userContext.getCategory());
+            List<String> terms = categoriesDatabaseHandler.getTerms(category);
             for (String term : terms) {
-                if (!notificationSent && tweet.toUpperCase().contains(term.toUpperCase())) {
+                if (!notificationSent && included(tweet, category) && !excluded(tweet, category)) {
                     log.info("{} matched {}", status.getUser().getScreenName(), term);
                     sendNotification(categoriesDatabaseHandler.getWebhook(userContext.getCategory()), status);
                     notificationSent = true;
                 }
             }
         }
+    }
+
+    private boolean excluded(String tweet, String category) {
+
+        List<String> exclusions = categoriesDatabaseHandler.getExclusions(category);
+        for (String exclusion : exclusions) {
+            if (tweet.toUpperCase().contains(exclusion.toUpperCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean included(String tweet, String category) {
+
+        List<String> terms = categoriesDatabaseHandler.getTerms(category);
+        for (String term : terms) {
+            if (tweet.toUpperCase().contains(term.toUpperCase())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

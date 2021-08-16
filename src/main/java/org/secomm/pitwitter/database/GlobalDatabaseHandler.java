@@ -18,7 +18,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-@PropertySource("classpath:database.properties")
 public class GlobalDatabaseHandler {
 
     private final Logger log = LoggerFactory.getLogger(GlobalDatabaseHandler.class);
@@ -90,6 +89,19 @@ public class GlobalDatabaseHandler {
     public List<String> getTerms() {
         Bson query = Filters.exists("terms");
         return globalCollection.find(query).first().getList("terms", String.class);
+    }
+
+    public List<String> getExcludes() {
+        Bson query = Filters.exists("excludes");
+        return globalCollection.find(query).first().getList("excludes", String.class);
+    }
+
+    public void addExclude(String exclude) {
+
+    }
+
+    public void deleteExclude(String exclude) {
+
     }
 
     public void addUser(String username) {

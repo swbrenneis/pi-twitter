@@ -10,7 +10,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 @Component
-@PropertySource("classpath:twitter4j.properties")
+@PropertySource("classpath:database.properties")
 public class MongoDbConnector {
 
     @Value("${db.mongodbUrl}")

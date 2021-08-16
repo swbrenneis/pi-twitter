@@ -102,6 +102,13 @@ public class CategoriesDatabaseHandler {
         return categoryDocument.getList("terms", String.class);
     }
 
+    public List<String> getExclusions(String category) {
+
+        Bson query = Filters.eq("category", category);
+        Document categoryDocument = categoriesCollection.find(query).first();
+        return categoryDocument.getList("exclusions", String.class);
+    }
+
     public String getWebhook(String category) {
 
         Bson query = Filters.eq("category", category);

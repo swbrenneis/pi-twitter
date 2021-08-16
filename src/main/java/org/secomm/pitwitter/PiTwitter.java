@@ -1,12 +1,8 @@
 package org.secomm.pitwitter;
 
 import org.secomm.pitwitter.connectors.MongoDbConnector;
-import org.secomm.pitwitter.module.CategoriesModule;
-import org.secomm.pitwitter.module.FollowModule;
-import org.secomm.pitwitter.module.MatchModule;
-import org.secomm.pitwitter.module.MentionsModule;
-import org.secomm.pitwitter.module.RateLimiter;
-import org.secomm.pitwitter.module.RestocksModule;
+import org.secomm.pitwitter.discord.DiscordAdapter;
+import org.secomm.pitwitter.module.*;
 import org.secomm.pitwitter.connectors.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,27 +27,16 @@ public class PiTwitter implements CommandLineRunner {
     private MongoDbConnector mongoDbConnector;
 
     @Autowired
-    private MatchModule matchModule;
-
-    @Autowired
-    private MentionsModule mentionsModule;
-
-    @Autowired
-    private RestocksModule restocksModule;
-
-    @Autowired
-    private CategoriesModule categoriesModule;
-
-    @Autowired
-    private FollowModule bncModule;
-
-    @Autowired
     private TwitterConnector twitterConnector;
 
     @Autowired
     private RateLimiter rateLimiter;
 
-    private ExecutorService executor;
+    @Autowired
+    private DiscordAdapter discordAdapter;
+
+    @Autowired
+    private ModuleManager moduleManager;
 
     public static void main(String... args) {
         SpringApplication.run(PiTwitter.class);
@@ -60,36 +45,33 @@ public class PiTwitter implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        executor = Executors.newFixedThreadPool(4);
         Lock lock;
         Condition condition;
         lock = new ReentrantLock();
         condition = lock.newCondition();
+        boolean run = true;
+
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
 
         try {
             mongoDbConnector.initialize();
             twitterConnector.initialize();
-            matchModule.initialize();
-            mentionsModule.initialize();
-            restocksModule.initialize();
-            categoriesModule.initialize();
-//            bncModule.initialize("botncop");
 
-            executor.submit(rateLimiter);
-            executor.submit(matchModule);
-            executor.submit(restocksModule);
-            executor.submit(categoriesModule);
-//            executor.submit(bncModule);
+            log.info("Starting modules");
+            moduleManager.startModules();
+
+            executorService.submit(rateLimiter);
 
             try {
-                while (true) {
+                while (run) {
                     lock.lock();
-                    condition.await(1, TimeUnit.MINUTES);
+                    run = !condition.await(1, TimeUnit.MINUTES);
                     lock.unlock();
                 }
             } finally {
                 lock.unlock();
             }
+            log.info("Twitter monitor ending");
         } catch (Exception e) {
             log.error("{} caught in run method: {}", e.getClass().getSimpleName(), e.getLocalizedMessage());
         }

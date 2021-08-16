@@ -1,7 +1,7 @@
 package org.secomm.pitwitter.module;
 
 import org.secomm.pitwitter.model.UserContext;
-import org.secomm.pitwitter.discord.DiscordNotifier;
+import org.secomm.pitwitter.discord.DiscordAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.Status;
@@ -27,35 +27,16 @@ public abstract class AbstractTwitterModule implements TwitterModule {
 
     protected void sendNotification(String webhook, Status status) {
 
-        rateLimiter.sendDiscordNotification(webhook, String.format(DiscordNotifier.TWEET_URL_FORMAT,
+        rateLimiter.sendDiscordNotification(webhook, String.format(DiscordAdapter.TWEET_URL_FORMAT,
                 status.getUser().getScreenName(), status.getId()));
     }
 
     @Override
-    public void run() {
+    public void ready() {
 
-        Lock lock = new ReentrantLock();
-        Condition condition = lock.newCondition();
-        boolean run = true;
-
-        while (run) {
-            try {
-                List<UserContext> userList = getUsers();
-                if (rateLimiter.twitterReady()) {
-                    for (UserContext userContext : userList) {
-                        rateLimiter.queueTimelineRequest(userContext, this);
-                    }
-                }
-                lock.lock();
-                try {
-                    run = !condition.await(1, TimeUnit.MINUTES);
-                } finally {
-                    lock.unlock();
-                }
-            } catch (Exception e) {
-                log.error("{} caught while queueing user timelines: {}", e.getClass().getSimpleName(),
-                        e.getLocalizedMessage());
-            }
+        List<UserContext> userList = getUsers();
+        for (UserContext userContext : userList) {
+            rateLimiter.queueTimelineRequest(userContext, this);
         }
     }
 }

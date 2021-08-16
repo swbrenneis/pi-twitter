@@ -1,7 +1,6 @@
 package org.secomm.pitwitter.module;
 
-import org.secomm.pitwitter.discord.DiscordNotifier;
-import org.secomm.pitwitter.module.RateLimiter;
+import org.secomm.pitwitter.discord.DiscordAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,7 @@ public class PiStatusListener implements StatusListener {
     public void onStatus(Status status) {
 
         log.info("Mention by {}", status.getUser().getScreenName());
-        rateLimiter.sendDiscordNotification(WEBHOOK, String.format(DiscordNotifier.TWEET_URL_FORMAT,
+        rateLimiter.sendDiscordNotification(WEBHOOK, String.format(DiscordAdapter.TWEET_URL_FORMAT,
                 status.getUser().getScreenName(), status.getId()));
     }
 

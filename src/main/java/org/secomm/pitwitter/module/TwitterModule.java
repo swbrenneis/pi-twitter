@@ -5,7 +5,9 @@ import twitter4j.Status;
 
 import java.util.List;
 
-public interface TwitterModule extends Runnable {
+public interface TwitterModule {
 
     void receivedStatuses(List<Status> statuses, UserContext userContext);
+
+    void ready();
 }
