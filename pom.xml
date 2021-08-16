@@ -23,7 +23,16 @@
         <twitter4j.version>4.0.7</twitter4j.version>
         <jsondb.version>1.0.115-j11</jsondb.version>
         <mongodb.version>3.12.10</mongodb.version>
+        <jda.version>4.3.0_307</jda.version>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>dv8tion</id>
+            <name>m2-dv8tion</name>
+            <url>https://m2.dv8tion.net/releases</url>
+        </repository>
+    </repositories>
 
     <dependencies>
 
@@ -46,15 +55,15 @@
         </dependency>
 
         <dependency>
-            <groupId>org.twitter4j</groupId>
-            <artifactId>twitter4j-stream</artifactId>
-            <version>${twitter4j.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
             <version>${mongodb.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.dv8tion</groupId>
+            <artifactId>JDA</artifactId>
+            <version>${jda.version}</version>
         </dependency>
 
         <dependency>
