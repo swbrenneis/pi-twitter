@@ -46,10 +46,16 @@ public class CategoriesModule extends AbstractTwitterModule {
             String tweet = status.getText();
             boolean notificationSent = false;
             List<String> terms = categoriesDatabaseHandler.getTerms(category);
+            // Strip out mentions
+            String stripped = tweet.replaceAll("@\\w+", "");
             for (String term : terms) {
-                if (!notificationSent && included(tweet, category) && !excluded(tweet, category)) {
+                if (!notificationSent && included(stripped, category) && !excluded(stripped, category)) {
                     log.info("{} matched {}", status.getUser().getScreenName(), term);
-                    sendNotification(categoriesDatabaseHandler.getWebhook(userContext.getCategory()), status);
+                    sendNotification(categoriesDatabaseHandler.getBncWebhook(userContext.getCategory()), status);
+                    String wickedWebhook = categoriesDatabaseHandler.getWickedWebhook(userContext.getCategory());
+                    if (wickedWebhook != null) {
+                        sendNotification(wickedWebhook, status);
+                    }
                     notificationSent = true;
                 }
             }

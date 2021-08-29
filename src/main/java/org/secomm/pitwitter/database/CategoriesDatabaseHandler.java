@@ -109,10 +109,17 @@ public class CategoriesDatabaseHandler {
         return categoryDocument.getList("exclusions", String.class);
     }
 
-    public String getWebhook(String category) {
+    public String getBncWebhook(String category) {
 
         Bson query = Filters.eq("category", category);
         Document categoryDocument = categoriesCollection.find(query).first();
-        return categoryDocument.getString("webhook");
+        return categoryDocument.getString("bncWebHook");
+    }
+
+    public String getWickedWebhook(String category) {
+
+        Bson query = Filters.eq("category", category);
+        Document categoryDocument = categoriesCollection.find(query).first();
+        return categoryDocument.getString("wickedWebHook");
     }
 }

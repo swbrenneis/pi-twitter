@@ -116,4 +116,9 @@ public class RestocksDatabaseHandler {
         return restocksCollection.find(query).first().getList("exclusions", String.class);
     }
 
+    public List<String> getRequired() {
+        Bson query = Filters.exists("required");
+        return restocksCollection.find(query).first().getList("required", String.class);
+    }
+
 }
