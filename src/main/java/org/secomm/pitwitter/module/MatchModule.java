@@ -55,11 +55,16 @@ public class MatchModule extends AbstractTwitterModule {
             String tweet = status.getText();
             boolean notificationSent = false;
             List<String> terms = globalDatabaseHandler.getTerms();
-            for (String term : terms) {
-                if (!notificationSent && tweet.toUpperCase().contains(term.toUpperCase())) {
-                    log.info("{} matched {}", status.getUser().getScreenName(), term);
-                    sendNotification(webhook, status);
-                    notificationSent = true;
+            if (terms.size() == 1 && terms.contains("*")) {
+                //Send everything
+                sendNotification(webhook, status);
+            } else {
+                for (String term : terms) {
+                    if (!notificationSent && tweet.toUpperCase().contains(term.toUpperCase())) {
+                        log.info("{} matched {}", status.getUser().getScreenName(), term);
+                        sendNotification(webhook, status);
+                        notificationSent = true;
+                    }
                 }
             }
         }

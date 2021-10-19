@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class CategoriesDatabaseHandler {
@@ -37,7 +38,7 @@ public class CategoriesDatabaseHandler {
     }
 
     public List<String> getCategories() {
-        Bson query = Filters.exists("categories");
+        Bson query = Filters.regex("categories", "\\w+");
         return categoriesCollection.find(query).first().getList("categories", String.class);
     }
 

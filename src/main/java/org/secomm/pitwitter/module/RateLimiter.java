@@ -102,12 +102,12 @@ public class RateLimiter implements Runnable {
     @Override
     public void run() {
 
-        Lock lock = new ReentrantLock();
-        Condition condition = lock.newCondition();
-        boolean run = true;
+        Lock runLock = new ReentrantLock();
+        Condition runCondition = runLock.newCondition();
+        boolean runFlag = true;
         Deque<Request> bucket = new ArrayDeque<>();
 
-        while (run) {
+        while (runFlag) {
             queueLock.lock();
             bucket.clear();
             log.info("Timeline request queue depth is {}", requestQueue.size());
@@ -143,13 +143,13 @@ public class RateLimiter implements Runnable {
 
             // Wait for more messages
             if (requestQueue.isEmpty()) {
-                lock.lock();
+                runLock.lock();
                 try {
-                    run = !condition.await(10, TimeUnit.SECONDS);
+                    runFlag = !runCondition.await(10, TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } finally {
-                    lock.unlock();
+                    runLock.unlock();
                 }
 
                 for (TwitterModule module : modules) {
