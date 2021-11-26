@@ -1,4 +1,4 @@
-package org.secomm.pitwitter.connectors;
+package org.secomm.pitwitter.database;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
