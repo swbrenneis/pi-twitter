@@ -61,9 +61,14 @@ public class CategoriesDatabaseHandler {
 
         Bson query = Filters.eq("category", category);
         Document categoryDocument = categoriesCollection.find(query).first();
-        return categoryDocument.getList("users", Document.class).stream()
-                .map(document -> new UserContext(document.getString("name"), document.getLong("lastId"), category))
-                .collect(Collectors.toList());
+        if (categoryDocument != null) {
+            return categoryDocument.getList("users", Document.class).stream()
+                    .map(document -> new UserContext(document.getString("name"), document.getLong("lastId"), category))
+                    .collect(Collectors.toList());
+        } else {
+            log.error("{} category not found", category);
+            return new ArrayList<>();
+        }
    }
 
    public long getLastId(String username, String category) {
@@ -122,5 +127,12 @@ public class CategoriesDatabaseHandler {
         Bson query = Filters.eq("category", category);
         Document categoryDocument = categoriesCollection.find(query).first();
         return categoryDocument.getString("wickedWebHook");
+    }
+
+    public String getTimeframeWebhook(String category) {
+
+        Bson query = Filters.eq("category", category);
+        Document categoryDocument = categoriesCollection.find(query).first();
+        return categoryDocument.getString("timeframeWebHook");
     }
 }

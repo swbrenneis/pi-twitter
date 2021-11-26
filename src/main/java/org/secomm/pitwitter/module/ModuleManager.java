@@ -37,8 +37,8 @@ public class ModuleManager {
 
     public void startModules() throws Exception {
 
-//        matchModule.initialize();
-//        rateLimiter.register(matchModule);
+        matchModule.initialize();
+        rateLimiter.register(matchModule);
 
 //        mentionsModule.initialize();
 
