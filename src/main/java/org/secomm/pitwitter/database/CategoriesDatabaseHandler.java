@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class CategoriesDatabaseHandler {
@@ -35,7 +36,7 @@ public class CategoriesDatabaseHandler {
     }
 
     public List<String> getCategories() {
-        Bson query = Filters.exists("categories");
+        Bson query = Filters.regex("categories", "\\w+");
         return categoriesCollection.find(query).first().getList("categories", String.class);
     }
 
@@ -58,9 +59,14 @@ public class CategoriesDatabaseHandler {
 
         Bson query = Filters.eq("category", category);
         Document categoryDocument = categoriesCollection.find(query).first();
-        return categoryDocument.getList("users", Document.class).stream()
-                .map(document -> new UserContext(document.getString("name"), document.getLong("lastId"), category))
-                .collect(Collectors.toList());
+        if (categoryDocument != null) {
+            return categoryDocument.getList("users", Document.class).stream()
+                    .map(document -> new UserContext(document.getString("name"), document.getLong("lastId"), category))
+                    .collect(Collectors.toList());
+        } else {
+            log.error("{} category not found", category);
+            return new ArrayList<>();
+        }
    }
 
    public long getLastId(String username, String category) {
@@ -107,10 +113,24 @@ public class CategoriesDatabaseHandler {
         return categoryDocument.getList("exclusions", String.class);
     }
 
-    public String getWebhook(String category) {
+    public String getBncWebhook(String category) {
 
         Bson query = Filters.eq("category", category);
         Document categoryDocument = categoriesCollection.find(query).first();
-        return categoryDocument.getString("webhook");
+        return categoryDocument.getString("bncWebHook");
+    }
+
+    public String getWickedWebhook(String category) {
+
+        Bson query = Filters.eq("category", category);
+        Document categoryDocument = categoriesCollection.find(query).first();
+        return categoryDocument.getString("wickedWebHook");
+    }
+
+    public String getTimeframeWebhook(String category) {
+
+        Bson query = Filters.eq("category", category);
+        Document categoryDocument = categoriesCollection.find(query).first();
+        return categoryDocument.getString("timeframeWebHook");
     }
 }

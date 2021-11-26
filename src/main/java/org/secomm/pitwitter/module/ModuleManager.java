@@ -40,10 +40,10 @@ public class ModuleManager {
         matchModule.initialize();
         rateLimiter.register(matchModule);
 
-        mentionsModule.initialize();
+//        mentionsModule.initialize();
 
-        restocksModule.initialize();
-        rateLimiter.register(restocksModule);
+//        restocksModule.initialize();
+//        rateLimiter.register(restocksModule);
 
         categoriesModule.initialize();
         rateLimiter.register(categoriesModule);

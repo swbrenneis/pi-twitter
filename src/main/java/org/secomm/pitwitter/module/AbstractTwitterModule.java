@@ -1,16 +1,12 @@
 package org.secomm.pitwitter.module;
 
-import org.secomm.pitwitter.model.UserContext;
 import org.secomm.pitwitter.discord.DiscordAdapter;
+import org.secomm.pitwitter.model.UserContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.Status;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class AbstractTwitterModule implements TwitterModule {
 

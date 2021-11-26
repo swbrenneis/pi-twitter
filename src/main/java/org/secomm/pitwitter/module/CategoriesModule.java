@@ -46,11 +46,19 @@ public class CategoriesModule extends AbstractTwitterModule {
             String tweet = status.getText();
             boolean notificationSent = false;
             List<String> terms = categoriesDatabaseHandler.getTerms(category);
-            for (String term : terms) {
-                if (!notificationSent && included(tweet, category) && !excluded(tweet, category)) {
-                    log.info("{} matched {}", status.getUser().getScreenName(), term);
-                    sendNotification(categoriesDatabaseHandler.getWebhook(userContext.getCategory()), status);
-                    notificationSent = true;
+            if (terms.size() == 1 && terms.contains("*")) {
+                //Send everything
+                sendNotifications(userContext.getCategory(), status);
+                notificationSent = true;
+            } else {
+                // Strip out mentions
+                String stripped = tweet.replaceAll("@\\w+", "");
+                for (String term : terms) {
+                    if (!notificationSent && included(stripped, category) && !excluded(stripped, category)) {
+                        log.info("{} matched {}", status.getUser().getScreenName(), term);
+                        sendNotifications(userContext.getCategory(), status);
+                        notificationSent = true;
+                    }
                 }
             }
         }
@@ -87,5 +95,20 @@ public class CategoriesModule extends AbstractTwitterModule {
             users.addAll(categoryUsers);
         }
         return users;
+    }
+
+    private void sendNotifications(String category, Status status) {
+        String wickedWebhook = categoriesDatabaseHandler.getWickedWebhook(category);
+        if (wickedWebhook != null) {
+            sendNotification(wickedWebhook, status);
+        }
+        String bncWebhook = categoriesDatabaseHandler.getBncWebhook(category);
+        if (bncWebhook != null) {
+            sendNotification(bncWebhook, status);
+        }
+        String timeframeWebhook = categoriesDatabaseHandler.getTimeframeWebhook(category);
+        if (timeframeWebhook != null) {
+            sendNotification(timeframeWebhook, status);
+        }
     }
 }

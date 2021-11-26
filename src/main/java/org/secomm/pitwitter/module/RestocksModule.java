@@ -49,16 +49,9 @@ public class RestocksModule extends AbstractTwitterModule {
             }
             String tweet = status.getText();
             boolean notificationSent = false;
-            if (tweet.toUpperCase().contains("RESTOCK")) {
-                boolean excluded = false;
-                List<String> exclusions = restocksDatabaseHandler.getExclusions();
-                for (String exclude : exclusions) {
-                    excluded |= tweet.toUpperCase().contains(exclude.toUpperCase());
-                }
-                if (!excluded) {
-                    log.info("{} matched RESTOCK", status.getUser().getScreenName());
-                    sendNotification(restocksWebhook, status);
-                }
+            if (analyzeRestockTweet(tweet)) {
+                log.info("Restock matched on {}", status.getUser().getScreenName());
+                sendNotification(restocksWebhook, status);
             } else {
                 List<String> terms = restocksDatabaseHandler.getTerms();
                 for (String term : terms) {
@@ -70,6 +63,36 @@ public class RestocksModule extends AbstractTwitterModule {
                 }
             }
         }
+    }
+
+    /**
+     * Analyzes the text of the tweet to filter matches.
+     *
+     * @param tweetText
+     * @return
+     */
+    private boolean analyzeRestockTweet(String tweetText) {
+
+        // Remove mentions
+        String stripped = tweetText.replaceAll("@\\w+", "");
+        // Analyze exclusions
+        List<String> exclusions = restocksDatabaseHandler.getExclusions();
+        for (String exclude : exclusions) {
+            if (stripped.toUpperCase().contains(exclude.toUpperCase())) {
+                return false;
+            }
+        }
+        // Analyze required terms. If the required terms list is empty, skip the analysis
+        // Should always return at least one term unless someone deleted "restock"
+        List<String> required = restocksDatabaseHandler.getRequired();
+        if (!required.isEmpty()) {
+            for (String require : required) {
+                if (!stripped.toUpperCase().contains(require.toUpperCase())) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override

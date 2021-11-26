@@ -85,7 +85,7 @@ public class RateLimiter implements Runnable {
 
         queueLock.lock();
         try {
-            webhookQueue.addLast(new WebHook(webhook, url));
+            webhookQueue.addFirst(new WebHook(webhook, url));
         } finally {
             queueLock.unlock();
         }
@@ -94,20 +94,19 @@ public class RateLimiter implements Runnable {
     private List<Status> queueTimelineRequest(UserContext userContext) throws Exception {
 
         log.debug("Getting {} statuses for user {}", PAGE_SIZE, userContext.getName());
-        List<Status> statusList = twitterConnector.getUserTimeline(userContext.getName(), PAGE_SIZE, userContext.getLastId());
 
-        return statusList;
+        return twitterConnector.getUserTimeline(userContext.getName(), PAGE_SIZE, userContext.getLastId());
     }
 
     @Override
     public void run() {
 
-        Lock lock = new ReentrantLock();
-        Condition condition = lock.newCondition();
-        boolean run = true;
+        Lock runLock = new ReentrantLock();
+        Condition runCondition = runLock.newCondition();
+        boolean runFlag = true;
         Deque<Request> bucket = new ArrayDeque<>();
 
-        while (run) {
+        while (runFlag) {
             queueLock.lock();
             bucket.clear();
             log.info("Timeline request queue depth is {}", requestQueue.size());
@@ -135,6 +134,7 @@ public class RateLimiter implements Runnable {
                 while (!webhookQueue.isEmpty()) {
                     WebHook webHook = webhookQueue.pop();
                     discordAdapter.sendWebhook(webHook.webhook, webHook.url);
+                    sleepNoException(1100);
                 }
             } catch (Exception e) {
                 log.warn("{} caught while sending webhooks: {}", e.getClass().getName(),
@@ -143,19 +143,27 @@ public class RateLimiter implements Runnable {
 
             // Wait for more messages
             if (requestQueue.isEmpty()) {
-                lock.lock();
+                runLock.lock();
                 try {
-                    run = !condition.await(10, TimeUnit.SECONDS);
+                    runFlag = !runCondition.await(10, TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } finally {
-                    lock.unlock();
+                    runLock.unlock();
                 }
 
                 for (TwitterModule module : modules) {
                     module.ready();
                 }
             }
+        }
+    }
+
+    private void sleepNoException(long delay) {
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            // No importa
         }
     }
 }
