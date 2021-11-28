@@ -7,11 +7,13 @@ import org.secomm.pitwitter.connectors.TwitterConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+import org.springframework.context.annotation.PropertySource;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,9 +23,16 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @SpringBootApplication(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
+@PropertySource("classpath:ssl.properties")
 public class PiTwitter implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(PiTwitter.class);
+
+    @Value("${keystore.path}")
+    private String keyStorePath;
+
+    @Value("${keystore.password}")
+    private String keyStorePassword;
 
     @Autowired
     private MongoDbConnector mongoDbConnector;
@@ -46,6 +55,11 @@ public class PiTwitter implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+
+/*
+        System.setProperty("javax.net.ssl.trustStore", keyStorePath);
+        System.setProperty("javax.net.ssl.trustStorePassword", keyStorePassword);
+*/
 
         Lock lock;
         Condition condition;

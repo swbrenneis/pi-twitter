@@ -123,6 +123,7 @@ public class RateLimiter implements Runnable {
                     } catch (Exception e) {
                         log.warn("{} caught while retrieving timelines: {}", e.getClass().getName(),
                                 e.getLocalizedMessage());
+                        e.printStackTrace();
                     }
                 }
             } finally {
@@ -152,8 +153,13 @@ public class RateLimiter implements Runnable {
                     runLock.unlock();
                 }
 
-                for (TwitterModule module : modules) {
-                    module.ready();
+                try {
+                    for (TwitterModule module : modules) {
+                        module.ready();
+                    }
+                } catch (Exception e) {
+                    log.warn("{} in rate limiter run loop: {}", e.getClass().getSimpleName(), e.getLocalizedMessage());
+                    e.printStackTrace();
                 }
             }
         }
